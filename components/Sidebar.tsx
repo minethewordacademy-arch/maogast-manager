@@ -15,6 +15,8 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
+  Layers, // 👈 Added for Sector Tasks
+   Wallet, // 👈 Add this for Investors
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -53,7 +55,9 @@ export default function Sidebar() {
   const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Admin Panel", href: "/admin", icon: Users },
+    { name: "Investors", href: "/investors", icon: Wallet }, // 👈 New Link
     { name: "Clients", href: "/clients", icon: UserCircle },
+    { name: "Sector Tasks", href: "/sector-tasks", icon: Layers }, // 👈 New Link
     { name: "Tasks", href: "/tasks", icon: CheckSquare },
     { name: "Birthdays", href: "/birthdays", icon: Gift },
     { name: "Tithe", href: "/tithe", icon: Banknote },
