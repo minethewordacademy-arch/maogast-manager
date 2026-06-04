@@ -35,6 +35,8 @@ const bibleVerses = [
   "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go. – Joshua 1:9",
   "Let the peace of Christ rule in your hearts. – Colossians 3:15",
   "Whatever you do, work at it with all your heart, as working for the Lord, not for human masters. – Colossians 3:23",
+  "A little one shall become a thousand, and a small one a mighty nation: I the LORD will hasten it in its time. – Isaiah 60:22",
+  "I will make a man more precious than fine gold; even a man than golden wedge of Ophir. – Isaiah 13:12",
 ];
 
 const motivationalQuotes = [
@@ -46,6 +48,8 @@ const motivationalQuotes = [
   "It does not matter how slowly you go as long as you do not stop. – Confucius",
   "If you are not willing to risk the usual, you will have to settle for the ordinary. – Jim Rohn",
   "The future belongs to those who believe in the beauty of their dreams. – Eleanor Roosevelt",
+  "Hope for the best and prepare for the worst. – Moses Ogutu",
+  "Stars do not seek attention, they earn admiration by shining. – TRM gift",
 ];
 
 export default function LandingPage() {

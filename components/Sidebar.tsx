@@ -15,8 +15,8 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
-  Layers, // 👈 Added for Sector Tasks
-   Wallet, // 👈 Add this for Investors
+  Layers,
+  Wallet,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -24,22 +24,49 @@ import { useRouter } from "next/navigation";
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isInvestor, setIsInvestor] = useState(false);
+  const [, setIsLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
-  // Detect screen size
+  // Detect screen size and fetch user role
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024);
-      if (window.innerWidth < 1024) {
-        setIsOpen(false); // Auto-collapse on mobile
-      } else {
-        setIsOpen(true); // Auto-expand on desktop
+    const fetchRoleAndResize = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        // Check Admin
+        const { data: empData } = await supabase
+          .from('employees')
+          .select('role')
+          .eq('auth_id', user.id);
+        const admin = (empData || []).some(emp => emp.role === 'admin');
+        setIsAdmin(admin);
+
+        // Check Investor
+        const { data: invData } = await supabase
+          .from('investors')
+          .select('id')
+          .eq('auth_id', user.id)
+          .maybeSingle();
+        setIsInvestor(!!invData);
       }
+      setIsLoading(false);
+
+      // Handle resize
+      const handleResize = () => {
+        setIsMobile(window.innerWidth < 1024);
+        if (window.innerWidth < 1024) {
+          setIsOpen(false);
+        } else {
+          setIsOpen(true);
+        }
+      };
+      handleResize();
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
     };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    fetchRoleAndResize();
   }, []);
 
   const handleLogout = async () => {
@@ -47,22 +74,44 @@ export default function Sidebar() {
     router.push("/login");
   };
 
-  // Hide sidebar on login and signup pages
   if (pathname === "/login" || pathname === "/signup" || pathname === "/") {
     return null;
   }
 
-  const navItems = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Admin Panel", href: "/admin", icon: Users },
-    { name: "Investors", href: "/investors", icon: Wallet }, // 👈 New Link
-    { name: "Clients", href: "/clients", icon: UserCircle },
-    { name: "Sector Tasks", href: "/sector-tasks", icon: Layers }, // 👈 New Link
-    { name: "Tasks", href: "/tasks", icon: CheckSquare },
-    { name: "Birthdays", href: "/birthdays", icon: Gift },
-    { name: "Tithe", href: "/tithe", icon: Banknote },
-    { name: "Settings", href: "/settings", icon: Settings },
-  ];
+  // Determine Navigation Items based on Role
+  let navItems = [];
+
+  if (isAdmin) {
+    // Admin sees everything
+    navItems = [
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Admin Panel", href: "/admin", icon: Users },
+      { name: "Investors", href: "/investors", icon: Wallet },
+      { name: "Clients", href: "/clients", icon: UserCircle },
+      { name: "Sector Tasks", href: "/sector-tasks", icon: Layers },
+      { name: "Tasks", href: "/tasks", icon: CheckSquare },
+      { name: "Birthdays", href: "/birthdays", icon: Gift },
+      { name: "Tithe", href: "/tithe", icon: Banknote },
+      { name: "Settings", href: "/settings", icon: Settings },
+    ];
+  } else if (isInvestor) {
+    // Investor sees only Investors and Settings
+    navItems = [
+      { name: "Investors", href: "/investors", icon: Wallet },
+      { name: "Settings", href: "/settings", icon: Settings },
+    ];
+  } else {
+    // Standard Employee sees everything except Admin Panel and Investors
+    navItems = [
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Clients", href: "/clients", icon: UserCircle },
+      { name: "Sector Tasks", href: "/sector-tasks", icon: Layers },
+      { name: "Tasks", href: "/tasks", icon: CheckSquare },
+      { name: "Birthdays", href: "/birthdays", icon: Gift },
+      { name: "Tithe", href: "/tithe", icon: Banknote },
+      { name: "Settings", href: "/settings", icon: Settings },
+    ];
+  }
 
   // Mobile hamburger menu
   if (isMobile) {

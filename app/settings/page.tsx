@@ -15,13 +15,13 @@ import {
   Settings as SettingsIcon,
 } from 'lucide-react';
 
-interface Employee {
+interface UserProfile {
   id: string;
   full_name: string;
   email: string;
-  role: string;
-  sector_id: string | null;
-  commission_rate: number;
+  role?: string; // Only for employees
+  sector_id?: string | null; // Only for employees
+  commission_rate?: number; // Only for employees
   phone: string | null;
 }
 
@@ -42,10 +42,11 @@ interface CompanySettings {
 export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
-  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [sectors, setSectors] = useState<Sector[]>([]);
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isInvestor, setIsInvestor] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'company'>('profile');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -75,25 +76,61 @@ export default function SettingsPage() {
       setLoading(true);
       setError(null);
 
-      // 1. Get ALL employee records for this auth_id (handles multi-sector users)
+      // 1. Get user record (Check employees table first, then investors)
       const { data: empData, error: empError } = await supabase
         .from('employees')
         .select('*')
         .eq('auth_id', authId);
 
       if (empError) throw new Error(empError.message);
-      if (!empData || empData.length === 0) {
+
+      let userProfile: UserProfile | null = null;
+      let isUserAdmin = false;
+
+      if (empData && empData.length > 0) {
+        // User is an Employee
+        const primaryEmployee = empData[0];
+        userProfile = {
+          id: primaryEmployee.id,
+          full_name: primaryEmployee.full_name,
+          email: primaryEmployee.email,
+          role: primaryEmployee.role,
+          sector_id: primaryEmployee.sector_id,
+          commission_rate: primaryEmployee.commission_rate,
+          phone: primaryEmployee.phone,
+        };
+        isUserAdmin = primaryEmployee.role === 'admin';
+        setIsAdmin(isUserAdmin);
+      } else {
+        // User is not an employee, check if they are an investor
+        const { data: invData, error: invError } = await supabase
+          .from('investors')
+          .select('*')
+          .eq('auth_id', authId)
+          .maybeSingle();
+
+        if (invError) throw new Error(invError.message);
+        if (invData) {
+          userProfile = {
+            id: invData.id,
+            full_name: invData.full_name,
+            email: invData.email,
+            phone: null,
+          };
+          setIsInvestor(true);
+        }
+      }
+
+      // If user profile is still null, redirect to login
+      if (!userProfile) {
         router.push('/login');
         return;
       }
 
-      // Use the first record for the UI (Profile, Role, Sector display)
-      const primaryEmployee = empData[0];
-      setEmployee(primaryEmployee);
-      setIsAdmin(primaryEmployee.role === 'admin');
+      setProfile(userProfile);
       setProfileForm({
-        full_name: primaryEmployee.full_name || '',
-        phone: primaryEmployee.phone || '',
+        full_name: userProfile.full_name || '',
+        phone: userProfile.phone || '',
       });
 
       // 2. Fetch sectors (for display)
@@ -105,7 +142,7 @@ export default function SettingsPage() {
       setSectors(sectorData || []);
 
       // 3. If admin, fetch company settings safely using maybeSingle()
-      if (primaryEmployee.role === 'admin') {
+      if (isUserAdmin) {
         const { data: settingsData, error: settingsError } = await supabase
           .from('company_settings')
           .select('*')
@@ -153,14 +190,23 @@ export default function SettingsPage() {
     if (!user) return;
 
     try {
-      // Update ALL employee records for this authenticated user (handles multi-sector)
+      let tableToUpdate = 'employees';
+      let updateValue = '';
+
+      if (isInvestor) {
+        tableToUpdate = 'investors';
+        updateValue = profile!.id; // Investors use their own ID
+      } else {
+        updateValue = user.id; // Employees use auth_id
+      }
+
       const { error } = await supabase
-        .from('employees')
+        .from(tableToUpdate)
         .update({
           full_name: profileForm.full_name.trim(),
           phone: profileForm.phone.trim() || null,
         })
-        .eq('auth_id', user.id); // Updates all sector rows for this user
+        .eq('auth_id', updateValue); // Updates all sector rows for this user
 
       if (error) throw new Error(error.message);
       setSuccess('Profile updated successfully.');
@@ -207,7 +253,7 @@ export default function SettingsPage() {
     }
   };
 
-  // --- Update Company Settings ---
+  // --- Update Company Settings (Admin only) ---
   const handleUpdateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -351,7 +397,7 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="email"
-                      value={employee?.email || ''}
+                      value={profile?.email || ''}
                       disabled
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                     />
@@ -368,39 +414,43 @@ export default function SettingsPage() {
                       placeholder="+254 712 345 678"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Sector
-                    </label>
-                    <input
-                      type="text"
-                      value={sectors.find(s => s.id === employee?.sector_id)?.name || 'Not Assigned'}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Role
-                    </label>
-                    <input
-                      type="text"
-                      value={employee?.role || ''}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Commission Rate (KES)
-                    </label>
-                    <input
-                      type="text"
-                      value={`KES ${employee?.commission_rate || 0}`}
-                      disabled
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
-                    />
-                  </div>
+                  {!isInvestor && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Sector
+                        </label>
+                        <input
+                          type="text"
+                          value={sectors.find(s => s.id === profile?.sector_id)?.name || 'Not Assigned'}
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Role
+                        </label>
+                        <input
+                          type="text"
+                          value={profile?.role || ''}
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Commission Rate (KES)
+                        </label>
+                        <input
+                          type="text"
+                          value={`KES ${profile?.commission_rate || 0}`}
+                          disabled
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end">
