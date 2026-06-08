@@ -14,6 +14,8 @@ import {
   Zap,
   Loader2,
   Heart,
+  PenTool,
+  BookOpen,
 } from "lucide-react";
 
 interface Stats {
@@ -24,6 +26,12 @@ interface Stats {
   totalClients: number;
   totalEmployees: number;
   totalSectors: number;
+}
+
+// Define the EGW Quote type
+interface EgwQuote {
+  text: string;
+  reference: string;
 }
 
 const bibleVerses = [
@@ -52,6 +60,26 @@ const motivationalQuotes = [
   "Stars do not seek attention, they earn admiration by shining. – TRM gift",
 ];
 
+// Ellen G. White Quotes
+const egwQuotes: EgwQuote[] = [
+  {
+    text: "Everyone should have an aim, an object, in life. The loins of the mind should be girded up, and the thoughts be trained to keep to the point as the compass to the pole. The mind should be directed in the right channel, according to well-formed plans. Then every step will be a step in advance. No time will be lost in following vague ideas and random plans. Worthy purposes should be kept constantly in view, and every thought and act should tend to their accomplishment. Let there ever be a fixedness of purpose to carry out that which is undertaken.",
+    reference: "RC 163.5",
+  },
+  {
+    text: "The Bible is the best book in the world for intellectual culture. The grand themes presented in it, the dignified simplicity with which these themes are handled, the light which it sheds upon the mysteries of heaven, bring strength and vigor to the understanding.",
+    reference: "The Review and Herald, April 6, 1886 — RC 163.8",
+  },
+  {
+    text: "Truly earnest men are few in our world, but they are greatly needed. The example of an energetic person is far-reaching; he has an electric power over others. He meets obstacles in his work; but he has the push in him, and instead of allowing his way to be hedged up, he breaks down every barrier.",
+    reference: "RC 163.2",
+  },
+  {
+    text: "There are thorns in every path. All who follow the Lord's leading must expect to meet with disappointments, crosses, and losses. But a spirit of true heroism will help them to overcome these. Many greatly magnify seeming difficulties, and then begin to pity themselves and give way to despondency. Such need to make an entire change in themselves. They need to discipline themselves to put forth exertion, and to overcome all childish feelings. They should determine that life shall not be spent in working at trifles. Let them resolve to accomplish something, and then do it.",
+    reference: "RC 163.3",
+  },
+];
+
 export default function LandingPage() {
   const [stats, setStats] = useState<Stats>({
     totalTasks: 0,
@@ -65,6 +93,8 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [currentQuote, setCurrentQuote] = useState("");
   const [currentVerse, setCurrentVerse] = useState("");
+  // Use object state for EGW quotes
+  const [currentEgwQuote, setCurrentEgwQuote] = useState<EgwQuote | null>(null);
 
   const fetchStats = async () => {
     try {
@@ -123,15 +153,18 @@ export default function LandingPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStats();
 
-    // Set random quote and verse on load
+    // Set random quote, verse, and EGW quote on load
     const randomQuote =
       motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
     const randomVerse =
       bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
+    const randomEgw =
+      egwQuotes[Math.floor(Math.random() * egwQuotes.length)];
     setCurrentQuote(randomQuote);
     setCurrentVerse(randomVerse);
+    setCurrentEgwQuote(randomEgw);
 
-    // Rotate quote and verse every 30 seconds
+    // Rotate quotes, verses, and EGW quotes every 50 seconds
     const interval = setInterval(() => {
       const newQuote =
         motivationalQuotes[
@@ -139,9 +172,12 @@ export default function LandingPage() {
         ];
       const newVerse =
         bibleVerses[Math.floor(Math.random() * bibleVerses.length)];
+      const newEgw =
+        egwQuotes[Math.floor(Math.random() * egwQuotes.length)];
       setCurrentQuote(newQuote);
       setCurrentVerse(newVerse);
-    }, 30000);
+      setCurrentEgwQuote(newEgw);
+    }, 50000);
 
     return () => clearInterval(interval);
   }, []);
@@ -314,29 +350,62 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Inspiration Section */}
-      <div className="bg-linear-to-r from-orange-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 py-16">
+      {/* Bible Verse Section */}
+      <div className="bg-linear-to-r from-green-50 to-teal-50 dark:from-gray-800 dark:to-gray-900 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="mb-8">
-            <Heart className="w-8 h-8 text-orange-500 mx-auto fill-orange-500" />
+            <Heart className="w-8 h-8 text-green-500 mx-auto fill-green-500" />
           </div>
-
-          {/* Verse Card */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border-l-4 border-green-500">
             <p className="text-xl md:text-2xl text-gray-800 dark:text-gray-200 italic">
               &quot;{currentVerse}&quot;
             </p>
           </div>
+        </div>
+      </div>
 
-          {/* ✅ Visual Boundary - Horizontal Divider */}
-          <div className="my-6 w-24 h-1 bg-linear-to-r from-orange-300 to-yellow-300 mx-auto rounded-full" />
+      {/* Visual Boundary */}
+      <div className="w-full h-4 bg-linear-to-r from-green-50 to-orange-50 dark:from-gray-800 dark:to-gray-900" />
 
-          {/* Quote Card */}
+      {/* Motivational Quote Section */}
+      <div className="bg-linear-to-r from-orange-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mb-8">
+            <Heart className="w-8 h-8 text-orange-500 mx-auto fill-orange-500" />
+          </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border-l-4 border-orange-500">
             <p className="text-xl md:text-2xl text-gray-800 dark:text-gray-200 italic">
               &quot;{currentQuote}&quot;
             </p>
           </div>
+        </div>
+      </div>
+
+      {/* Pen of Inspiration Section (Ellen G. White) */}
+      <div className="bg-linear-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mb-8">
+            <PenTool className="w-8 h-8 text-blue-600 mx-auto" />
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-4">
+              Pen of Inspiration
+            </h3>
+          </div>
+          {currentEgwQuote && (
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border-l-4 border-blue-600 relative overflow-hidden">
+              {/* Decorative circle */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 dark:bg-blue-900/30 rounded-full blur-2xl opacity-50" />
+              
+              <div className="relative">
+                <BookOpen className="w-6 h-6 text-blue-600 dark:text-blue-400 mb-4" />
+                <p className="text-lg md:text-xl text-gray-800 dark:text-gray-200 text-justify leading-relaxed">
+                  &quot;{currentEgwQuote.text}&quot;
+                </p>
+                <p className="mt-6 text-sm text-blue-600 dark:text-blue-400 font-medium text-right border-t pt-4 border-gray-200 dark:border-gray-700">
+                  — Ellen G. White, <span className="font-bold">{currentEgwQuote.reference}</span>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
