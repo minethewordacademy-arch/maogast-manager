@@ -432,13 +432,21 @@ export default function AdminPage() {
                   <span>Morning Consecration</span>
                 </div>
                 <p className="text-white text-lg md:text-xl font-serif leading-relaxed">
-                  &quot;Heavenly Father, as I step into the admin panel this day, I
-                  consecrate every decision, every approval, and every task to
-                  Your glory. Grant me wisdom beyond my understanding, clarity
-                  in the face of complexity, and patience in all dealings. Bless
-                  the work of Maogast Softworks, guide our team, and may our
-                  efforts be a testimony to Your faithfulness. In Jesus&apos; mighty
-                  name.{" "}
+                  &quot;Heavenly Father, as I step into the admin panel this
+                  day, I consecrate every decision, every approval, and every
+                  task to Your glory. Grant me wisdom beyond my understanding,
+                  clarity in the face of complexity, and patience in all
+                  dealings. Lord, I lift up every client who trusts Maogast
+                  Softworks – whether they need software, printing, AI design,
+                  or training. May their experience with us be marked by
+                  excellence, fairness, and genuine care. Satisfy their needs
+                  beyond their expectations, and let every project we deliver
+                  bring relief, growth, and joy to their organisations. Father,
+                  I also pray for their personal lives – for their families,
+                  health, and peace of mind. Use our work to lighten their
+                  burdens, not add to them. Bless the work of Maogast Softworks,
+                  guide our team, and may our efforts be a testimony to Your
+                  faithfulness. In Jesus’ mighty name. Amen.{" "}
                   <span className="font-sans text-sm font-semibold">Amen.</span>
                   &quot;
                 </p>
@@ -1000,11 +1008,19 @@ export default function AdminPage() {
               A Closing Prayer
             </h3>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
-              &quot;Lord, as I step away from the dashboard, I trust you to continue
-              leading and guiding our work. May the tasks we&apos;ve completed bring
-              honor to Your name. I ask for peace over our decisions, wisdom for
-              our next steps, and protection over our team. Let me rest assured
-              knowing that my work is for You. Amen.&quot;
+              &quot;Lord, as I step away from the dashboard, I trust You to
+              continue leading and guiding our work. May the tasks we’ve
+              completed bring honour to Your name. I ask for peace over our
+              decisions, wisdom for our next steps, and protection over our
+              team. Let me rest assured knowing that my work is for You. Lord,
+              tonight I also entrust every client we served today into Your
+              hands. Heal their struggles, answer their unspoken prayers, and
+              let the work we did for them become a stepping stone to Your
+              provision. May they feel valued, respected, and deeply satisfied
+              with what we delivered. In the quiet of this evening, I pray that
+              You would refresh their spirits, strengthen their bodies, and fill
+              their homes with peace. Let our partnership be a channel of Your
+              blessing. Thank You for the privilege of serving them. Amen.&quot;
             </p>
             <div className="flex gap-4 justify-center">
               <button

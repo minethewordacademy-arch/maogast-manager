@@ -78,6 +78,10 @@ const egwQuotes: EgwQuote[] = [
     text: "There are thorns in every path. All who follow the Lord's leading must expect to meet with disappointments, crosses, and losses. But a spirit of true heroism will help them to overcome these. Many greatly magnify seeming difficulties, and then begin to pity themselves and give way to despondency. Such need to make an entire change in themselves. They need to discipline themselves to put forth exertion, and to overcome all childish feelings. They should determine that life shall not be spent in working at trifles. Let them resolve to accomplish something, and then do it.",
     reference: "RC 163.3",
   },
+   {
+    text: "These words are to be believed and practiced. Christians are to be superior in wisdom, in knowledge, in skill, because they believe in God and His power. The Lord desires them to reach the highest round of the ladder, that they may glorify Him. He has a treasure-house of wisdom from which they may draw.....",
+    reference: "RC 164.5",
+  },
 ];
 
 export default function LandingPage() {
