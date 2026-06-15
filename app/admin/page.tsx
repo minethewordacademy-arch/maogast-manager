@@ -75,6 +75,14 @@ export default function AdminPage() {
     "logout" | "dashboard" | null
   >(null);
 
+  // New: Action Confirmation Modal State
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [actionDetails, setActionDetails] = useState<{
+    taskId: string;
+    action: "approved" | "declined" | "finalized";
+  } | null>(null);
+  const [declineReason, setDeclineReason] = useState("");
+
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -171,6 +179,7 @@ export default function AdminPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAdminData();
   }, [fetchAdminData]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
@@ -224,10 +233,21 @@ export default function AdminPage() {
     }
   };
 
-  const handleAdminTaskAction = async (
+  // Handle Admin Action (Opens Modal)
+  const handleAdminTaskAction = (
     taskId: string,
     action: "approved" | "declined" | "finalized",
   ) => {
+    setActionDetails({ taskId, action });
+    setDeclineReason("");
+    setShowActionModal(true);
+  };
+
+  // Confirm Action (Executes after Modal Confirmation)
+  const confirmAction = async () => {
+    if (!actionDetails) return;
+    const { taskId, action } = actionDetails;
+
     try {
       setProcessingId(taskId);
       setError(null);
@@ -241,14 +261,12 @@ export default function AdminPage() {
       const updates: Partial<Task> = { status: statusMap[action] };
 
       if (action === "declined") {
-        const reason = prompt(
-          "Please enter the reason for declining this task:",
-        );
-        if (reason === null) {
+        if (!declineReason.trim()) {
+          setError("Please enter a reason for declining this task.");
           setProcessingId(null);
           return;
         }
-        updates.declined_reason = reason;
+        updates.declined_reason = declineReason.trim();
       }
 
       const { error } = await supabase
@@ -285,6 +303,9 @@ export default function AdminPage() {
         }
       }
 
+      setShowActionModal(false);
+      setActionDetails(null);
+      setDeclineReason("");
       await fetchAdminData();
     } catch (err: unknown) {
       const errorMessage =
@@ -436,17 +457,9 @@ export default function AdminPage() {
                   day, I consecrate every decision, every approval, and every
                   task to Your glory. Grant me wisdom beyond my understanding,
                   clarity in the face of complexity, and patience in all
-                  dealings. Lord, I lift up every client who trusts Maogast
-                  Softworks – whether they need software, printing, AI design,
-                  or training. May their experience with us be marked by
-                  excellence, fairness, and genuine care. Satisfy their needs
-                  beyond their expectations, and let every project we deliver
-                  bring relief, growth, and joy to their organisations. Father,
-                  I also pray for their personal lives – for their families,
-                  health, and peace of mind. Use our work to lighten their
-                  burdens, not add to them. Bless the work of Maogast Softworks,
-                  guide our team, and may our efforts be a testimony to Your
-                  faithfulness. In Jesus’ mighty name. Amen.{" "}
+                  dealings. Bless the work of Maogast Softworks, guide our team,
+                  and may our efforts be a testimony to Your faithfulness. In
+                  Jesus&apos; mighty name.{" "}
                   <span className="font-sans text-sm font-semibold">Amen.</span>
                   &quot;
                 </p>
@@ -537,150 +550,7 @@ export default function AdminPage() {
           </select>
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column: Employee Rates */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Users className="w-5 h-5 text-orange-600" />
-                Employee Commission Rates
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Adjust rates for each employee.
-              </p>
-            </div>
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {employees.length === 0 ? (
-                <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                  No employees found.
-                </div>
-              ) : (
-                employees.map((emp) => (
-                  <div
-                    key={emp.id}
-                    className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {emp.full_name}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {emp.email}
-                      </p>
-                      <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded">
-                        {emp.role}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center">
-                        <span className="text-sm text-gray-600 dark:text-gray-400 mr-2">
-                          Rate:
-                        </span>
-                        <input
-                          type="number"
-                          defaultValue={emp.commission_rate}
-                          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
-                          id={`rate-${emp.id}`}
-                        />
-                        <span className="ml-1 text-sm text-gray-500 dark:text-gray-400">
-                          KES
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const input = document.getElementById(
-                            `rate-${emp.id}`,
-                          ) as HTMLInputElement;
-                          const newRate = parseFloat(input.value);
-                          if (!isNaN(newRate) && newRate >= 0) {
-                            handleUpdateRate(emp.id, newRate);
-                          }
-                        }}
-                        disabled={processingId === emp.id}
-                        className="px-3 py-1 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
-                      >
-                        {processingId === emp.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          "Update"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Right Column: Pending Commissions */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <Banknote className="w-5 h-5 text-green-600" />
-                Pending Commissions
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Mark commissions as paid.
-              </p>
-            </div>
-            <div className="divide-y divide-gray-200 dark:divide-gray-700">
-              {commissions.length === 0 ? (
-                <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                  No commissions recorded yet.
-                </div>
-              ) : (
-                commissions.map((comm) => (
-                  <div
-                    key={comm.id}
-                    className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900 dark:text-white">
-                        {comm.employee?.full_name || "Unknown Employee"}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Amount:{" "}
-                        <span className="font-bold text-gray-900 dark:text-white">
-                          KES {comm.amount}
-                        </span>
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
-                        Earned: {new Date(comm.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          comm.paid
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {comm.paid ? "Paid" : "Pending"}
-                      </span>
-                      {!comm.paid && (
-                        <button
-                          onClick={() => handleMarkPaid(comm.id)}
-                          disabled={processingId === comm.id}
-                          className="ml-2 px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
-                        >
-                          {processingId === comm.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            "Mark Paid"
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* All Tasks in Sector */}
+        {/* SECTION 1: All Tasks in Sector (Moved to Top) */}
         <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -829,6 +699,149 @@ export default function AdminPage() {
               <ArrowLeft className="w-4 h-4" />
               Back to Dashboard
             </button>
+          </div>
+        </div>
+
+        {/* Main Content Grid (Employee Rates & Commissions) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+          {/* Left Column: Employee Rates */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-orange-600" />
+                Employee Commission Rates
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Adjust rates for each employee.
+              </p>
+            </div>
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {employees.length === 0 ? (
+                <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  No employees found.
+                </div>
+              ) : (
+                employees.map((emp) => (
+                  <div
+                    key={emp.id}
+                    className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {emp.full_name}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {emp.email}
+                      </p>
+                      <span className="inline-block mt-1 px-2 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded">
+                        {emp.role}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 mr-2">
+                          Rate:
+                        </span>
+                        <input
+                          type="number"
+                          defaultValue={emp.commission_rate}
+                          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                          id={`rate-${emp.id}`}
+                        />
+                        <span className="ml-1 text-sm text-gray-500 dark:text-gray-400">
+                          KES
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const input = document.getElementById(
+                            `rate-${emp.id}`,
+                          ) as HTMLInputElement;
+                          const newRate = parseFloat(input.value);
+                          if (!isNaN(newRate) && newRate >= 0) {
+                            handleUpdateRate(emp.id, newRate);
+                          }
+                        }}
+                        disabled={processingId === emp.id}
+                        className="px-3 py-1 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+                      >
+                        {processingId === emp.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          "Update"
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Right Column: Pending Commissions */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <Banknote className="w-5 h-5 text-green-600" />
+                Pending Commissions
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Mark commissions as paid.
+              </p>
+            </div>
+            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+              {commissions.length === 0 ? (
+                <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                  No commissions recorded yet.
+                </div>
+              ) : (
+                commissions.map((comm) => (
+                  <div
+                    key={comm.id}
+                    className="px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {comm.employee?.full_name || "Unknown Employee"}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Amount:{" "}
+                        <span className="font-bold text-gray-900 dark:text-white">
+                          KES {comm.amount}
+                        </span>
+                      </p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                        Earned: {new Date(comm.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          comm.paid
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {comm.paid ? "Paid" : "Pending"}
+                      </span>
+                      {!comm.paid && (
+                        <button
+                          onClick={() => handleMarkPaid(comm.id)}
+                          disabled={processingId === comm.id}
+                          className="ml-2 px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50"
+                        >
+                          {processingId === comm.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            "Mark Paid"
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -997,6 +1010,85 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Action Confirmation Modal (Unified for Approve/Decline/Finalize) */}
+      {showActionModal && actionDetails && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                {actionDetails.action === "approved"
+                  ? "Approve Task"
+                  : actionDetails.action === "declined"
+                  ? "Decline Task"
+                  : "Finalize & Pay"}
+              </h3>
+              <button
+                onClick={() => {
+                  setShowActionModal(false);
+                  setActionDetails(null);
+                  setDeclineReason("");
+                }}
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-gray-600 dark:text-gray-400">
+                {actionDetails.action === "approved"
+                  ? "Are you sure you want to approve this task? The assigned employee will be notified and can start working."
+                  : actionDetails.action === "declined"
+                  ? "Are you sure you want to decline this task? A reason is required so the employee can understand the feedback."
+                  : "Are you sure you want to finalize this task? This will mark it as completed and calculate the commission for the employee."}
+              </p>
+
+              {actionDetails.action === "declined" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Decline Reason <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={declineReason}
+                    onChange={(e) => setDeclineReason(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                    placeholder="Please explain why this task is being declined..."
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => {
+                    setShowActionModal(false);
+                    setActionDetails(null);
+                    setDeclineReason("");
+                  }}
+                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmAction}
+                  disabled={processingId === actionDetails.taskId}
+                  className="px-4 py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+                >
+                  {processingId === actionDetails.taskId ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </span>
+                  ) : (
+                    "Confirm"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Closing Prayer Modal */}
       {showClosingPrayer && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -1009,18 +1101,10 @@ export default function AdminPage() {
             </h3>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
               &quot;Lord, as I step away from the dashboard, I trust You to
-              continue leading and guiding our work. May the tasks we’ve
+              continue leading and guiding our work. May the tasks we&apos;ve
               completed bring honour to Your name. I ask for peace over our
               decisions, wisdom for our next steps, and protection over our
-              team. Let me rest assured knowing that my work is for You. Lord,
-              tonight I also entrust every client we served today into Your
-              hands. Heal their struggles, answer their unspoken prayers, and
-              let the work we did for them become a stepping stone to Your
-              provision. May they feel valued, respected, and deeply satisfied
-              with what we delivered. In the quiet of this evening, I pray that
-              You would refresh their spirits, strengthen their bodies, and fill
-              their homes with peace. Let our partnership be a channel of Your
-              blessing. Thank You for the privilege of serving them. Amen.&quot;
+              team. Let me rest assured knowing that my work is for You. Amen.&quot;
             </p>
             <div className="flex gap-4 justify-center">
               <button
