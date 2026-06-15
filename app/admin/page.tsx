@@ -457,9 +457,17 @@ export default function AdminPage() {
                   day, I consecrate every decision, every approval, and every
                   task to Your glory. Grant me wisdom beyond my understanding,
                   clarity in the face of complexity, and patience in all
-                  dealings. Bless the work of Maogast Softworks, guide our team,
-                  and may our efforts be a testimony to Your faithfulness. In
-                  Jesus&apos; mighty name.{" "}
+                  dealings. Lord, I lift up every client who trusts Maogast
+                  Softworks – whether they need software, printing, AI design,
+                  or training. May their experience with us be marked by
+                  excellence, fairness, and genuine care. Satisfy their needs
+                  beyond their expectations, and let every project we deliver
+                  bring relief, growth, and joy to their organisations. Father,
+                  I also pray for their personal lives – for their families,
+                  health, and peace of mind. Use our work to lighten their
+                  burdens, not add to them. Bless the work of Maogast Softworks,
+                  guide our team, and may our efforts be a testimony to Your
+                  faithfulness. In Jesus’ mighty name. {" "}
                   <span className="font-sans text-sm font-semibold">Amen.</span>
                   &quot;
                 </p>
