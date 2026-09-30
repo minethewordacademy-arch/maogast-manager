@@ -1,3 +1,4 @@
+// app/investors/page.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -215,8 +216,6 @@ export default function InvestorsPage() {
 
       if (investorError) throw new Error(investorError.message);
 
-      // Note: The auth user is not deleted here to keep the account available if needed.
-
       setSuccess("Investor deleted successfully.");
       fetchInvestors();
     } catch (err: unknown) {
@@ -255,69 +254,69 @@ export default function InvestorsPage() {
     const inv = currentInvestor;
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col items-center justify-center p-4">
-        <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 md:p-12 relative overflow-hidden">
+        <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8 md:p-12 relative overflow-hidden">
           {/* Decorative Top Bar */}
           <div className="absolute top-0 left-0 right-0 h-2 bg-linear-to-r from-orange-500 to-yellow-500" />
 
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-orange-100 to-yellow-100 dark:from-orange-900/30 dark:to-yellow-900/30 rounded-full mb-4">
-              <User className="w-10 h-10 text-orange-600" />
+            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-linear-to-br from-orange-100 to-yellow-100 dark:from-orange-900/30 dark:to-yellow-900/30 rounded-full mb-4">
+              <User className="w-8 h-8 sm:w-10 sm:h-10 text-orange-600" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
               Welcome, {inv.full_name}!
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Thank you for being a valued partner in the journey of{" "}
               <strong>Maogast Softworks</strong>.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-orange-50 dark:bg-orange-900/10 rounded-lg p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-8">
+            <div className="bg-orange-50 dark:bg-orange-900/10 rounded-lg p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-2">
                 <Banknote className="w-6 h-6 text-orange-600" />
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300">
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm sm:text-base">
                   Investment Amount
                 </h3>
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 KES {inv.amount_invested.toLocaleString()}
               </p>
             </div>
-            <div className="bg-yellow-50 dark:bg-yellow-900/10 rounded-lg p-6">
+            <div className="bg-yellow-50 dark:bg-yellow-900/10 rounded-lg p-4 sm:p-6">
               <div className="flex items-center gap-3 mb-2">
                 <Banknote className="w-6 h-6 text-yellow-600" />
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300">
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm sm:text-base">
                   Dividend Share
                 </h3>
               </div>
-              <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 {inv.profit_percentage}%
               </p>
             </div>
           </div>
 
           {inv.agreement_text && (
-            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-6 mb-6">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 sm:p-6 mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <FileText className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                <h3 className="font-semibold text-gray-700 dark:text-gray-300">
+                <h3 className="font-semibold text-gray-700 dark:text-gray-300 text-sm sm:text-base">
                   Agreement Overview
                 </h3>
               </div>
-              <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 leading-relaxed">
                 {inv.agreement_text}
               </p>
             </div>
           )}
 
-          <div className="bg-linear-to-r from-orange-500 to-yellow-500 rounded-lg p-6 text-white text-center">
+          <div className="bg-linear-to-r from-orange-500 to-yellow-500 rounded-lg p-5 sm:p-6 text-white text-center">
             <Heart className="w-6 h-6 inline-block mb-2 fill-white" />
-            <p className="font-medium">
+            <p className="font-medium text-sm sm:text-base">
               We are deeply grateful for your trust and partnership. Together,
               we will build a prosperous future. 🚀
             </p>
-            <p className="text-sm opacity-90 mt-2">
+            <p className="text-xs sm:text-sm opacity-90 mt-2">
               — The Maogast Softworks Team
             </p>
           </div>
@@ -325,7 +324,7 @@ export default function InvestorsPage() {
           <div className="mt-6 text-center">
             <button
               onClick={() => router.push("/settings")}
-              className="text-orange-600 hover:text-orange-700 font-medium"
+              className="text-orange-600 hover:text-orange-700 font-medium text-sm sm:text-base"
             >
               Go to Settings →
             </button>
@@ -337,14 +336,14 @@ export default function InvestorsPage() {
 
   // --- Admin View (Full Management) ---
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
               Investors Management
             </h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
+            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Manage investors, their contributions, and agreements.
             </p>
           </div>
@@ -353,7 +352,7 @@ export default function InvestorsPage() {
               resetForm();
               setShowAddModal(true);
             }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5" />
             Add Investor
@@ -361,25 +360,23 @@ export default function InvestorsPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              <span>{error}</span>
-            </div>
+          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 flex items-center gap-2 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5" />
-              <span>{success}</span>
-            </div>
+          <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 flex items-center gap-2 text-sm">
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <span>{success}</span>
           </div>
         )}
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+          
+          {/* DESKTOP TABLE (Hidden on mobile) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-700">
@@ -465,15 +462,80 @@ export default function InvestorsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* MOBILE CARD VIEW (Hidden on desktop) */}
+          <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+            {investors.length === 0 ? (
+              <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                No investors yet. Click &quot;Add Investor&quot; to get started.
+              </div>
+            ) : (
+              investors.map((inv) => (
+                <div key={inv.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-base">
+                        {inv.full_name}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {inv.email}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openEditModal(inv)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-full transition-colors"
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(inv.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
+                    <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                      <span className="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">Investment</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        KES {inv.amount_invested.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                      <span className="block text-xs text-gray-500 dark:text-gray-400 mb-0.5">Dividend</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {inv.profit_percentage}%
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3">
+                    {inv.agreement_text ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                        Has Agreement
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">No Agreement</span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
       {/* Add/Edit Investor Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-md w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                 {editInvestor ? "Edit Investor" : "Add New Investor"}
               </h3>
               <button
@@ -483,9 +545,9 @@ export default function InvestorsPage() {
                   setError(null);
                   setSuccess(null);
                 }}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
@@ -499,7 +561,7 @@ export default function InvestorsPage() {
                   name="full_name"
                   value={formData.full_name}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                   placeholder="John Doe"
                   required
                 />
@@ -514,7 +576,7 @@ export default function InvestorsPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                   placeholder="investor@example.com"
                   required
                 />
@@ -530,7 +592,7 @@ export default function InvestorsPage() {
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                    className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                     placeholder="Default: Invest123"
                   />
                 </div>
@@ -546,7 +608,7 @@ export default function InvestorsPage() {
                   name="amount_invested"
                   value={formData.amount_invested}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. 100000"
                   min="0"
                   required
@@ -563,7 +625,7 @@ export default function InvestorsPage() {
                   name="profit_percentage"
                   value={formData.profit_percentage}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. 10"
                   min="0"
                   step="0.01"
@@ -580,12 +642,12 @@ export default function InvestorsPage() {
                   value={formData.agreement_text}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                   placeholder="Summarize the agreement terms between Maogast and the investor..."
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={() => {
@@ -594,14 +656,14 @@ export default function InvestorsPage() {
                     setError(null);
                     setSuccess(null);
                   }}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                  className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50 transition-colors"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">

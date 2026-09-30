@@ -1,3 +1,4 @@
+// app/clients/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -87,6 +88,7 @@ export default function ClientsPage() {
       (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (client.phone && client.phone.includes(searchTerm))
     );
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilteredClients(filtered);
   }, [searchTerm, clients]);
 
@@ -214,20 +216,22 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        
+        {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
               Clients
             </h1>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
+            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Manage your clients and their details
             </p>
           </div>
           <button
             onClick={openCreateModal}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5" />
             Add Client
@@ -235,20 +239,16 @@ export default function ClientsPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              <span>{error}</span>
-            </div>
+          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 flex items-center gap-2 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5" />
-              <span>{success}</span>
-            </div>
+          <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 flex items-center gap-2 text-sm">
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <span>{success}</span>
           </div>
         )}
 
@@ -261,14 +261,16 @@ export default function ClientsPage() {
               placeholder="Search clients by name, email, or phone..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+              className="w-full pl-10 pr-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 text-base"
             />
           </div>
         </div>
 
-        {/* Client Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
+        {/* Clients List */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+          
+          {/* DESKTOP TABLE (Hidden on mobile) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-700">
@@ -334,15 +336,81 @@ export default function ClientsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* MOBILE CARD VIEW (Hidden on desktop) */}
+          <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+            {filteredClients.length === 0 ? (
+              <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                {searchTerm ? 'No clients match your search' : 'No clients yet. Click "Add Client" to get started.'}
+              </div>
+            ) : (
+              filteredClients.map((client) => (
+                <div key={client.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <Link href={`/birthdays?client=${client.id}`} className="font-semibold text-gray-900 dark:text-white text-base hover:text-orange-600 hover:underline">
+                        {client.full_name}
+                      </Link>
+                      {client.company_name && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                          {client.company_name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/50 p-1 rounded-md">
+                      <button
+                        onClick={() => openEditModal(client)}
+                        className="p-1.5 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDeletingClient(client.id);
+                          setShowDeleteModal(true);
+                        }}
+                        className="p-1.5 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                    <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                      <span className="block text-gray-500 dark:text-gray-400 mb-0.5">Phone</span>
+                      <span className="font-medium text-gray-900 dark:text-white truncate block">
+                        {client.phone || '-'}
+                      </span>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                      <span className="block text-gray-500 dark:text-gray-400 mb-0.5">Birthday</span>
+                      <span className="font-medium text-gray-900 dark:text-white truncate block">
+                        {client.birthday ? new Date(client.birthday).toLocaleDateString() : '-'}
+                      </span>
+                    </div>
+                    <div className="col-span-2 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                      <span className="block text-gray-500 dark:text-gray-400 mb-0.5">Email</span>
+                      <span className="font-medium text-gray-900 dark:text-white truncate block">
+                        {client.email || '-'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-md w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                 {editingClient ? 'Edit Client' : 'Add New Client'}
               </h3>
               <button
@@ -351,9 +419,9 @@ export default function ClientsPage() {
                   resetForm();
                   setError(null);
                 }}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
@@ -367,7 +435,7 @@ export default function ClientsPage() {
                   name="full_name"
                   value={formData.full_name}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 text-base"
                   placeholder="John Doe"
                 />
               </div>
@@ -381,7 +449,7 @@ export default function ClientsPage() {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 text-base"
                   placeholder="john@example.com"
                 />
               </div>
@@ -395,7 +463,7 @@ export default function ClientsPage() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 text-base"
                   placeholder="+254 712 345 678"
                 />
               </div>
@@ -409,7 +477,7 @@ export default function ClientsPage() {
                   name="birthday"
                   value={formData.birthday}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 text-base"
                 />
               </div>
 
@@ -422,12 +490,12 @@ export default function ClientsPage() {
                   name="company_name"
                   value={formData.company_name}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 text-base"
                   placeholder="Acme Inc."
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={() => {
@@ -435,20 +503,20 @@ export default function ClientsPage() {
                     resetForm();
                     setError(null);
                   }}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                  className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50 transition-colors"
                 >
                   {isSubmitting ? (
-                    <span className="flex items-center gap-2">
+                    <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       {editingClient ? 'Updating...' : 'Creating...'}
-                    </span>
+                    </>
                   ) : (
                     editingClient ? 'Update Client' : 'Create Client'
                   )}
@@ -461,39 +529,39 @@ export default function ClientsPage() {
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-sm w-full p-5 sm:p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                 Delete Client
               </h3>
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Are you sure you want to delete this client? This action cannot be undone.
             </p>
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={isSubmitting}
-                className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50 transition-colors"
               >
                 {isSubmitting ? (
-                  <span className="flex items-center gap-2">
+                  <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Deleting...
-                  </span>
+                  </>
                 ) : (
                   'Delete'
                 )}

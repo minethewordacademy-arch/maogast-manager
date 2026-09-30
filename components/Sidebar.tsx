@@ -10,6 +10,7 @@ import {
   Settings, 
   LogOut,
   UserCircle,
+  LineChart,
   Gift,
   Banknote,
   Menu,
@@ -85,6 +86,7 @@ export default function Sidebar() {
     // Admin sees everything
     navItems = [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      { name: "Finances", href: "/finances", icon: LineChart }, // <-- ADD THIS
       { name: "Admin Panel", href: "/admin", icon: Users },
       { name: "Investors", href: "/investors", icon: Wallet },
       { name: "Clients", href: "/clients", icon: UserCircle },

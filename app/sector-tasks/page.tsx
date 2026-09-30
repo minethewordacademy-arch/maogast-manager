@@ -1,3 +1,4 @@
+// app/sector-tasks/page.tsx
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -107,28 +108,28 @@ export default function SectorTasksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             Sector Team Tasks
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
             View all tasks across your sector to see what your team is working on.
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              <span>{error}</span>
-            </div>
+          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 flex items-center gap-2 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+          
+          {/* DESKTOP TABLE (Hidden on mobile) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-700">
@@ -185,9 +186,54 @@ export default function SectorTasksPage() {
               </tbody>
             </table>
           </div>
+
+          {/* MOBILE CARD VIEW (Hidden on desktop) */}
+          <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+            {tasks.length === 0 ? (
+              <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                No tasks found in your sector. It&apos;s a clean slate!
+              </div>
+            ) : (
+              tasks.map((task) => (
+                <div key={task.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+                      {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}
+                    </span>
+                  </div>
+                  
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">
+                    {task.title}
+                  </h3>
+                  
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    {task.description}
+                  </p>
+                  
+                  <div className="flex flex-col gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    {task.client_name && (
+                      <div className="text-blue-500">
+                        Client: {task.client_name}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <User className="w-3.5 h-3.5" />
+                      <span>{task.employee?.full_name || 'Unknown Employee'}</span>
+                    </div>
+                    <div>
+                      Created: {new Date(task.created_at).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
-        <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+        <div className="mt-6 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400 px-4">
           <p>👁️ You are viewing these tasks in read-only mode. Only the assigned employee can update them.</p>
         </div>
       </div>

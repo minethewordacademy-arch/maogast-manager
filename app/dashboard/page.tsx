@@ -1,3 +1,4 @@
+// app/dashboard/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -439,85 +440,93 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-orange-600">Loading...</div>
+        <div className="text-orange-600 flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          Loading...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-16 lg:pt-0">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pt-16 lg:pt-0">
+        
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             My Tasks
           </h2>
           <button
             onClick={() => setShowTaskModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 sm:py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5" />
             New Task
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-orange-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Active Tasks</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                   {tasks.filter(t => t.status !== 'completed' && t.status !== 'declined').length}
                 </p>
               </div>
-              <Clock className="w-8 h-8 text-orange-500" />
+              <Clock className="w-8 h-8 text-orange-500 shrink-0" />
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Completed</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                   {tasks.filter((t) => t.status === "completed").length}
                 </p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-500" />
+              <CheckCircle className="w-8 h-8 text-green-500 shrink-0" />
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-gray-400 sm:col-span-2 md:col-span-1">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">Total Tasks</p>
-                <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                   {tasks.length}
                 </p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700" />
+              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
             </div>
           </div>
         </div>
 
+        {/* Admin Commission Card */}
         {employee?.role === "admin" && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-green-600">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Total Commission (Sector)
                   </p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                     KES {totalCommissionEarned.toFixed(2)}
                   </p>
                 </div>
-                <Banknote className="w-8 h-8 text-green-600" />
+                <Banknote className="w-8 h-8 text-green-600 shrink-0" />
               </div>
             </div>
           </div>
         )}
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        {/* Tasks List */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+          <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              My Tasks
+              Task List
             </h2>
           </div>
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -529,18 +538,19 @@ export default function DashboardPage() {
               tasks.map((task) => (
                 <div
                   key={task.id}
-                  className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  className="p-4 sm:px-6 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                 >
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                  {/* Task Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white truncate">
                       {task.title}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mt-0.5">
                       {task.description}
                     </p>
-                    <div className="mt-1 flex items-center gap-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <span
-                        className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           task.status === "completed"
                             ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                             : task.status === "approved"
@@ -560,47 +570,48 @@ export default function DashboardPage() {
                         </span>
                       )}
                       {task.status === 'declined' && task.declined_reason && (
-                        <span className="text-xs text-red-500 ml-2">
+                        <span className="text-xs text-red-500 truncate">
                           Reason: {task.declined_reason}
                         </span>
                       )}
                       {task.client_name && (
-                        <span className="text-xs text-blue-500 ml-2">
+                        <span className="text-xs text-blue-500 truncate">
                           Client: {task.client_name}
                         </span>
                       )}
                     </div>
                   </div>
                   
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <button
-                      onClick={() => openViewModal(task)}
-                      className="px-2 py-1 text-sm text-gray-600 hover:text-gray-900 transition-colors"
-                      title="View Details"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    
-                    <button
-                      onClick={() => openEditModal(task)}
-                      className="px-2 py-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
-                      title="Edit Task"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    
-                    <button
-                      onClick={() => handleDeleteTask(task.id)}
-                      className="px-2 py-1 text-sm text-red-600 hover:text-red-800 transition-colors"
-                      title="Delete Task"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  {/* Task Actions - Wraps beautifully on mobile */}
+                  <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0 md:justify-end shrink-0">
+                    <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/50 p-1 rounded-md">
+                      <button
+                        onClick={() => openViewModal(task)}
+                        className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => openEditModal(task)}
+                        className="p-2 text-blue-600 hover:text-blue-800 transition-colors"
+                        title="Edit Task"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTask(task.id)}
+                        className="p-2 text-red-600 hover:text-red-800 transition-colors"
+                        title="Delete Task"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
 
                     {task.status === 'approved' && (
                       <button
                         onClick={() => handleTaskStatusChange(task.id, 'in-progress')}
-                        className="px-3 py-1 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md whitespace-nowrap"
+                        className="flex-1 md:flex-none px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md whitespace-nowrap shadow-sm"
                       >
                         Start Work
                       </button>
@@ -609,20 +620,20 @@ export default function DashboardPage() {
                     {task.status === 'in-progress' && (
                       <button
                         onClick={() => handleTaskStatusChange(task.id, 'completed')}
-                        className="px-3 py-1 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-md whitespace-nowrap"
+                        className="flex-1 md:flex-none px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-md whitespace-nowrap shadow-sm"
                       >
                         Request Completion
                       </button>
                     )}
                     
                     {task.status === 'pending' && (
-                      <span className="px-3 py-1 text-xs bg-yellow-100 text-yellow-800 rounded-md whitespace-nowrap">
+                      <span className="flex-1 md:flex-none px-4 py-2 text-center text-sm bg-yellow-100 text-yellow-800 rounded-md whitespace-nowrap">
                         Awaiting Approval
                       </span>
                     )}
                     
                     {task.status === 'completed' && (
-                      <span className="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-md whitespace-nowrap">
+                      <span className="flex-1 md:flex-none px-4 py-2 text-center text-sm bg-green-100 text-green-800 rounded-md whitespace-nowrap">
                         Pending Finalization
                       </span>
                     )}
@@ -636,17 +647,17 @@ export default function DashboardPage() {
 
       {/* Create Task Modal */}
       {showTaskModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-md w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                 Create New Task
               </h3>
               <button
                 onClick={() => setShowTaskModal(false)}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
@@ -670,7 +681,7 @@ export default function DashboardPage() {
                 <select
                   value={selectedSectorId}
                   onChange={(e) => setSelectedSectorId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                 >
                   {sectorOptions.length === 0 ? (
                     <option value="">No sectors assigned</option>
@@ -693,7 +704,7 @@ export default function DashboardPage() {
                   required
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. Design website logo"
                 />
               </div>
@@ -706,7 +717,7 @@ export default function DashboardPage() {
                   value={taskDescription}
                   onChange={(e) => setTaskDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                   placeholder="Describe the task..."
                 />
               </div>
@@ -719,7 +730,7 @@ export default function DashboardPage() {
                   type="date"
                   value={taskDueDate}
                   onChange={(e) => setTaskDueDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                 />
               </div>
 
@@ -730,7 +741,7 @@ export default function DashboardPage() {
                 <select
                   value={taskProjectId}
                   onChange={(e) => setTaskProjectId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                 >
                   <option value="">Select a project (optional)</option>
                   {projects.map((p) => (
@@ -746,7 +757,7 @@ export default function DashboardPage() {
                   type="text"
                   value={projectInput}
                   onChange={(e) => setProjectInput(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                   placeholder="Type new project name..."
                 />
               </div>
@@ -759,7 +770,7 @@ export default function DashboardPage() {
                   type="text"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. John Doe"
                 />
               </div>
@@ -772,29 +783,29 @@ export default function DashboardPage() {
                   type="text"
                   value={clientContact}
                   onChange={(e) => setClientContact(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. 0722 123 456"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={() => setShowTaskModal(false)}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                  className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50 transition-colors"
                 >
                   {isSubmitting ? (
-                    <span className="flex items-center gap-2">
+                    <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Creating...
-                    </span>
+                    </>
                   ) : (
                     "Create Task"
                   )}
@@ -807,10 +818,10 @@ export default function DashboardPage() {
 
       {/* Edit Task Modal */}
       {showEditModal && selectedTask && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-md w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                 Edit Task
               </h3>
               <button
@@ -818,9 +829,9 @@ export default function DashboardPage() {
                   setShowEditModal(false);
                   setSelectedTask(null);
                 }}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
@@ -834,7 +845,7 @@ export default function DashboardPage() {
                   required
                   value={taskTitle}
                   onChange={(e) => setTaskTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. Design website logo"
                 />
               </div>
@@ -847,7 +858,7 @@ export default function DashboardPage() {
                   value={taskDescription}
                   onChange={(e) => setTaskDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                   placeholder="Describe the task..."
                 />
               </div>
@@ -860,7 +871,7 @@ export default function DashboardPage() {
                   type="date"
                   value={taskDueDate}
                   onChange={(e) => setTaskDueDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                 />
               </div>
 
@@ -872,7 +883,7 @@ export default function DashboardPage() {
                   type="text"
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. John Doe"
                 />
               </div>
@@ -885,32 +896,32 @@ export default function DashboardPage() {
                   type="text"
                   value={clientContact}
                   onChange={(e) => setClientContact(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. 0722 123 456"
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedTask(null);
                   }}
-                  className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                  className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50 transition-colors"
                 >
                   {isSubmitting ? (
-                    <span className="flex items-center gap-2">
+                    <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Saving...
-                    </span>
+                    </>
                   ) : (
                     "Save Changes"
                   )}
@@ -923,10 +934,10 @@ export default function DashboardPage() {
 
       {/* View Task Modal */}
       {showViewModal && selectedTask && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-md w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                 Task Details
               </h3>
               <button
@@ -934,9 +945,9 @@ export default function DashboardPage() {
                   setShowViewModal(false);
                   setSelectedTask(null);
                 }}
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
@@ -1036,13 +1047,13 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
               <button
                 onClick={() => {
                   setShowViewModal(false);
                   setSelectedTask(null);
                 }}
-                className="px-4 py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md"
+                className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md transition-colors text-center"
               >
                 Close
               </button>

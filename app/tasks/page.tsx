@@ -1,3 +1,4 @@
+// app/tasks/page.tsx
 'use client';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -185,89 +186,87 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             Tasks
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
             {isAdmin ? 'Overview of all tasks across all sectors' : 'Track your work and progress'}
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              <span>{error}</span>
-            </div>
+          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 flex items-center gap-2 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Total</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
               </div>
-              <BarChart className="w-6 h-6 text-blue-500" />
+              <BarChart className="w-6 h-6 text-blue-500 shrink-0" />
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                <p className="text-xl sm:text-2xl font-bold text-yellow-600">{stats.pending}</p>
               </div>
-              <Clock className="w-6 h-6 text-yellow-500" />
+              <Clock className="w-6 h-6 text-yellow-500 shrink-0" />
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">In Progress</p>
-                <p className="text-2xl font-bold text-purple-600">{stats.inProgress}</p>
+                <p className="text-xl sm:text-2xl font-bold text-purple-600">{stats.inProgress}</p>
               </div>
-              <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+              <Loader2 className="w-6 h-6 text-purple-500 animate-spin shrink-0" />
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Approved</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.approved}</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-600">{stats.approved}</p>
               </div>
-              <CheckCircle className="w-6 h-6 text-blue-500" />
+              <CheckCircle className="w-6 h-6 text-blue-500 shrink-0" />
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Completed</p>
-                <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">{stats.completed}</p>
               </div>
-              <CheckCircle className="w-6 h-6 text-green-500" />
+              <CheckCircle className="w-6 h-6 text-green-500 shrink-0" />
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Completion Rate</p>
-                <p className="text-2xl font-bold text-green-600">{stats.completionRate}%</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600">{stats.completionRate}%</p>
               </div>
-              <TrendingUp className="w-6 h-6 text-green-500" />
+              <TrendingUp className="w-6 h-6 text-green-500 shrink-0" />
             </div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-5 mb-6 border border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col gap-4">
+            <div className="w-full">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -275,15 +274,15 @@ export default function TasksPage() {
                   placeholder="Search tasks by title, description, or client..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full pl-10 pr-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 text-base"
                 />
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-3">
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                className="w-full sm:w-40 px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 text-base"
               >
                 <option value="all">All Status</option>
                 <option value="pending">Pending</option>
@@ -295,7 +294,7 @@ export default function TasksPage() {
               <select
                 value={filterSector}
                 onChange={(e) => setFilterSector(e.target.value)}
-                className="w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                className="w-full sm:w-40 px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 text-base"
               >
                 <option value="all">All Sectors</option>
                 {sectors.map(sector => (
@@ -306,7 +305,7 @@ export default function TasksPage() {
                 <select
                   value={filterEmployee}
                   onChange={(e) => setFilterEmployee(e.target.value)}
-                  className="w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                  className="w-full sm:w-40 px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 text-base"
                 >
                   <option value="all">All Employees</option>
                   {employees.map(emp => (
@@ -319,8 +318,10 @@ export default function TasksPage() {
         </div>
 
         {/* Tasks List */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
+          
+          {/* DESKTOP TABLE (Hidden on mobile) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-700">
@@ -337,7 +338,7 @@ export default function TasksPage() {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredTasks.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 7 : 5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={isAdmin ? 6 : 5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                       No tasks found. Adjust your filters or create a new task.
                     </td>
                   </tr>
@@ -379,6 +380,64 @@ export default function TasksPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* MOBILE CARD VIEW (Hidden on desktop) */}
+          <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
+            {filteredTasks.length === 0 ? (
+              <div className="px-4 py-8 text-center text-gray-500 dark:text-gray-400 text-sm">
+                No tasks found. Adjust your filters or create a new task.
+              </div>
+            ) : (
+              filteredTasks.map((task) => (
+                <div key={task.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(task.status)}`}>
+                      {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+                    </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Due: {task.due_date ? new Date(task.due_date).toLocaleDateString() : '-'}
+                    </span>
+                  </div>
+                  
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">
+                    {task.title}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                    {task.description}
+                  </p>
+                  
+                  <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                    <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                      <span className="block text-gray-500 dark:text-gray-400 mb-0.5">Sector</span>
+                      <span className="font-medium text-gray-900 dark:text-white truncate block">
+                        {sectors.find(s => s.id === task.sector_id)?.name || 'Unknown'}
+                      </span>
+                    </div>
+                    {isAdmin && (
+                      <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                        <span className="block text-gray-500 dark:text-gray-400 mb-0.5">Assigned To</span>
+                        <span className="font-medium text-gray-900 dark:text-white truncate block">
+                          {employees.find(e => e.id === task.employee_id)?.full_name || 'Unknown'}
+                        </span>
+                      </div>
+                    )}
+                    <div className={`bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md ${isAdmin ? '' : 'col-span-2'}`}>
+                      <span className="block text-gray-500 dark:text-gray-400 mb-0.5">Client</span>
+                      <span className="font-medium text-gray-900 dark:text-white truncate block">
+                        {task.client_name || '-'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {task.status === 'declined' && task.declined_reason && (
+                    <div className="mt-2 text-xs text-red-500 bg-red-50 dark:bg-red-900/20 p-2 rounded-md">
+                      Reason: {task.declined_reason}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
