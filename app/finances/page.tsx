@@ -17,6 +17,9 @@ import {
   CheckCircle2,
   Calendar,
   Filter,
+  Pencil,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 interface Transaction {
@@ -31,6 +34,14 @@ interface Transaction {
 
 type Timeframe = "weekly" | "monthly" | "yearly";
 
+const emptyForm = {
+  type: "income" as "income" | "expense",
+  amount: "",
+  source: "",
+  date: new Date().toISOString().split("T")[0],
+  description: "",
+};
+
 export default function FinancesPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -40,16 +51,16 @@ export default function FinancesPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Modal State
+  // Modal state (shared for Create & Edit)
   const [showModal, setShowModal] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    type: "income" as "income" | "expense",
-    amount: "",
-    source: "",
-    date: new Date().toISOString().split("T")[0],
-    description: "",
-  });
+  const [formData, setFormData] = useState({ ...emptyForm });
+
+  // Delete confirmation modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
 
@@ -73,7 +84,7 @@ export default function FinancesPage() {
 
       if (empError) throw empError;
       const isUserAdmin = (empData || []).some((emp) => emp.role === "admin");
-      
+
       if (!isUserAdmin) {
         router.push("/dashboard");
         return;
@@ -101,7 +112,37 @@ export default function FinancesPage() {
     fetchFinances();
   }, [fetchFinances]);
 
-  // Handle Form Submission
+  // Reset form + close modal
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingTransaction(null);
+    setFormData({ ...emptyForm });
+    setError(null);
+  };
+
+  // Open create modal
+  const openCreateModal = () => {
+    setEditingTransaction(null);
+    setFormData({ ...emptyForm });
+    setError(null);
+    setShowModal(true);
+  };
+
+  // Open edit modal
+  const openEditModal = (t: Transaction) => {
+    setEditingTransaction(t);
+    setFormData({
+      type: t.type,
+      amount: String(t.amount),
+      source: t.source,
+      date: t.date,
+      description: t.description || "",
+    });
+    setError(null);
+    setShowModal(true);
+  };
+
+  // Handle Create OR Update
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -115,43 +156,89 @@ export default function FinancesPage() {
     }
 
     try {
-      const { error } = await supabase.from("transactions").insert({
-        amount: parseFloat(formData.amount),
-        type: formData.type,
-        source: formData.source.trim(),
-        date: formData.date,
-        description: formData.description.trim(),
-        created_by: user?.id,
-      });
+      if (editingTransaction) {
+        // UPDATE
+        const { error } = await supabase
+          .from("transactions")
+          .update({
+            amount: parseFloat(formData.amount),
+            type: formData.type,
+            source: formData.source.trim(),
+            date: formData.date,
+            description: formData.description.trim(),
+          })
+          .eq("id", editingTransaction.id);
 
-      if (error) throw error;
+        if (error) throw error;
+        setSuccess("Transaction updated successfully!");
+      } else {
+        // CREATE
+        const { error } = await supabase.from("transactions").insert({
+          amount: parseFloat(formData.amount),
+          type: formData.type,
+          source: formData.source.trim(),
+          date: formData.date,
+          description: formData.description.trim(),
+          created_by: user?.id,
+        });
 
-      setSuccess("Transaction logged successfully!");
-      setFormData({
-        type: "income",
-        amount: "",
-        source: "",
-        date: new Date().toISOString().split("T")[0],
-        description: "",
-      });
-      
+        if (error) throw error;
+        setSuccess("Transaction logged successfully!");
+      }
+
       setTimeout(() => {
-        setShowModal(false);
+        closeModal();
         setSuccess(null);
         fetchFinances();
-      }, 1500);
+      }, 1200);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to log transaction";
+      const msg = err instanceof Error ? err.message : "Failed to save transaction";
       setError(msg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  // Open delete confirmation
+  const openDeleteModal = (t: Transaction) => {
+    setTransactionToDelete(t);
+    setShowDeleteModal(true);
+    setError(null);
+  };
+
+  // Confirm delete
+  const handleDelete = async () => {
+    if (!transactionToDelete) return;
+    setIsDeleting(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const { error } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("id", transactionToDelete.id);
+
+      if (error) throw error;
+
+      setSuccess("Transaction deleted successfully.");
+      setShowDeleteModal(false);
+      setTransactionToDelete(null);
+      await fetchFinances();
+
+      setTimeout(() => setSuccess(null), 2500);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete transaction";
+      setError(msg);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Filter Logic based on Timeframe
   const filteredTransactions = useMemo(() => {
     const now = new Date();
-    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1)); // Monday
+    const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 1));
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
 
@@ -175,7 +262,7 @@ export default function FinancesPage() {
     });
 
     const netIncome = income - expenses;
-    const tithe = netIncome > 0 ? netIncome * 0.1 : 0; // 10% Tithe
+    const tithe = netIncome > 0 ? netIncome * 0.1 : 0;
 
     return { income, expenses, netIncome, tithe };
   }, [filteredTransactions]);
@@ -203,7 +290,7 @@ export default function FinancesPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        
+
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
           <div>
@@ -216,7 +303,7 @@ export default function FinancesPage() {
             </p>
           </div>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openCreateModal}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors shadow-sm"
           >
             <Plus className="w-5 h-5" />
@@ -238,7 +325,7 @@ export default function FinancesPage() {
           </div>
         )}
 
-        {/* Timeframe Filter - Full width on mobile */}
+        {/* Timeframe Filter */}
         <div className="flex flex-col sm:flex-row items-center gap-2 mb-6 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm w-full sm:w-fit border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start mb-2 sm:mb-0">
             <Filter className="w-5 h-5 text-gray-400 shrink-0" />
@@ -261,9 +348,8 @@ export default function FinancesPage() {
           </div>
         </div>
 
-        {/* Stats Cards - 1 column on mobile, 2 on tablet, 4 on desktop */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          {/* Total Income */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-green-500 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -278,7 +364,6 @@ export default function FinancesPage() {
             </div>
           </div>
 
-          {/* Total Expenses */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-red-500 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -293,7 +378,6 @@ export default function FinancesPage() {
             </div>
           </div>
 
-          {/* Net Income */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-blue-500 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -308,7 +392,6 @@ export default function FinancesPage() {
             </div>
           </div>
 
-          {/* Tithe (10%) */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-purple-500 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -343,12 +426,13 @@ export default function FinancesPage() {
                   <th className="px-6 py-3">Source (Project - Client)</th>
                   <th className="px-6 py-3">Description</th>
                   <th className="px-6 py-3 text-right">Amount</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                       No transactions recorded for this period.
                     </td>
                   </tr>
@@ -378,6 +462,24 @@ export default function FinancesPage() {
                       }`}>
                         {t.type === "income" ? "+" : "-"} {formatCurrency(t.amount)}
                       </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => openEditModal(t)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                            title="Edit Transaction"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => openDeleteModal(t)}
+                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                            title="Delete Transaction"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -394,29 +496,47 @@ export default function FinancesPage() {
             ) : (
               filteredTransactions.map((t) => (
                 <div key={t.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      t.type === "income"
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                        : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                    }`}>
-                      {t.type.charAt(0).toUpperCase() + t.type.slice(1)}
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(t.date).toLocaleDateString()}
-                    </span>
+                  <div className="flex justify-between items-start mb-2 gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${
+                        t.type === "income"
+                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                      }`}>
+                        {t.type.charAt(0).toUpperCase() + t.type.slice(1)}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {new Date(t.date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => openEditModal(t)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => openDeleteModal(t)}
+                        className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  
+
                   <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">
                     {t.source}
                   </h3>
-                  
+
                   {t.description && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
                       {t.description}
                     </p>
                   )}
-                  
+
                   <div className={`text-right font-bold text-lg ${
                     t.type === "income" ? "text-green-600" : "text-red-600"
                   }`}>
@@ -429,16 +549,18 @@ export default function FinancesPage() {
         </div>
       </div>
 
-      {/* Log Transaction Modal */}
+      {/* ======================================================
+          CREATE / EDIT TRANSACTION MODAL
+      ====================================================== */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-md w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                Log New Transaction
+                {editingTransaction ? "Edit Transaction" : "Log New Transaction"}
               </h3>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={closeModal}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
               >
                 <X className="w-6 h-6" />
@@ -541,7 +663,7 @@ export default function FinancesPage() {
               <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={closeModal}
                   className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors text-center"
                 >
                   Cancel
@@ -554,14 +676,93 @@ export default function FinancesPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Saving...
+                      {editingTransaction ? "Updating..." : "Saving..."}
                     </>
+                  ) : editingTransaction ? (
+                    "Update Transaction"
                   ) : (
                     "Save Transaction"
                   )}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================
+          DELETE CONFIRMATION MODAL
+      ====================================================== */}
+      {showDeleteModal && transactionToDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-sm w-full p-5 sm:p-6">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+                <AlertTriangle className="w-7 h-7 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+                Delete Transaction?
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                This action cannot be undone. This will permanently remove the transaction from your records.
+              </p>
+
+              {/* Preview of the transaction being deleted */}
+              <div className="w-full bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-6 text-left">
+                <div className="flex justify-between items-center mb-1">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    transactionToDelete.type === "income"
+                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                      : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                  }`}>
+                    {transactionToDelete.type.charAt(0).toUpperCase() + transactionToDelete.type.slice(1)}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(transactionToDelete.date).toLocaleDateString()}
+                  </span>
+                </div>
+                <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                  {transactionToDelete.source}
+                </p>
+                <p className={`font-bold mt-1 ${
+                  transactionToDelete.type === "income" ? "text-green-600" : "text-red-600"
+                }`}>
+                  {transactionToDelete.type === "income" ? "+" : "-"} {formatCurrency(transactionToDelete.amount)}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setTransactionToDelete(null);
+                }}
+                disabled={isDeleting}
+                className="w-full sm:w-auto flex-1 px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-50 transition-colors"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
