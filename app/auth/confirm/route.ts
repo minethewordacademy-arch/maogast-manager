@@ -1,6 +1,5 @@
 // app/auth/confirm/route.ts
 import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -10,23 +9,23 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/reset-password';
 
   if (token_hash && type) {
-    const cookieStore = await cookies();
+    // 1. Create the redirect response FIRST so we can attach cookies to it
+    const response = NextResponse.redirect(`${origin}${next}`);
+
+    // 2. Create the Supabase client bound to this response's cookies
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
         cookies: {
           getAll() {
-            return cookieStore.getAll();
+            return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              // Ignore: called from Server Component
-            }
+            // 3. Attach auth cookies to the redirect response
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options);
+            });
           },
         },
       }
@@ -38,10 +37,12 @@ export async function GET(request: NextRequest) {
     });
 
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      // 4. Return the same response — cookies are now attached
+      return response;
     }
+
+    console.error('[auth/confirm] verifyOtp failed:', error.message);
   }
 
-  // If verification fails, redirect to error page
   return NextResponse.redirect(`${origin}/login?error=invalid_reset_link`);
 }
