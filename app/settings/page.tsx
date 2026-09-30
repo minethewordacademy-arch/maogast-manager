@@ -1,15 +1,16 @@
+// app/settings/page.tsx
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
-import { 
-  UserCircle, 
-  Building2, 
-  Save, 
-  Loader2, 
-  AlertCircle, 
+import {
+  UserCircle,
+  Building2,
+  Save,
+  Loader2,
+  AlertCircle,
   CheckCircle2,
   Lock,
   Settings as SettingsIcon,
@@ -19,9 +20,9 @@ interface UserProfile {
   id: string;
   full_name: string;
   email: string;
-  role?: string; // Only for employees
-  sector_id?: string | null; // Only for employees
-  commission_rate?: number; // Only for employees
+  role?: string;
+  sector_id?: string | null;
+  commission_rate?: number;
   phone: string | null;
 }
 
@@ -52,7 +53,6 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form states
   const [profileForm, setProfileForm] = useState({
     full_name: '',
     phone: '',
@@ -76,7 +76,6 @@ export default function SettingsPage() {
       setLoading(true);
       setError(null);
 
-      // 1. Get user record (Check employees table first, then investors)
       const { data: empData, error: empError } = await supabase
         .from('employees')
         .select('*')
@@ -88,7 +87,6 @@ export default function SettingsPage() {
       let isUserAdmin = false;
 
       if (empData && empData.length > 0) {
-        // User is an Employee
         const primaryEmployee = empData[0];
         userProfile = {
           id: primaryEmployee.id,
@@ -102,7 +100,6 @@ export default function SettingsPage() {
         isUserAdmin = primaryEmployee.role === 'admin';
         setIsAdmin(isUserAdmin);
       } else {
-        // User is not an employee, check if they are an investor
         const { data: invData, error: invError } = await supabase
           .from('investors')
           .select('*')
@@ -121,7 +118,6 @@ export default function SettingsPage() {
         }
       }
 
-      // If user profile is still null, redirect to login
       if (!userProfile) {
         router.push('/login');
         return;
@@ -133,7 +129,6 @@ export default function SettingsPage() {
         phone: userProfile.phone || '',
       });
 
-      // 2. Fetch sectors (for display)
       const { data: sectorData, error: sectorError } = await supabase
         .from('sectors')
         .select('id, name');
@@ -141,12 +136,11 @@ export default function SettingsPage() {
       if (sectorError) throw new Error(sectorError.message);
       setSectors(sectorData || []);
 
-      // 3. If admin, fetch company settings safely using maybeSingle()
       if (isUserAdmin) {
         const { data: settingsData, error: settingsError } = await supabase
           .from('company_settings')
           .select('*')
-          .maybeSingle(); // Prevents crashes on duplicate rows
+          .maybeSingle();
 
         if (settingsError) throw new Error(settingsError.message);
         setCompanySettings(settingsData);
@@ -158,7 +152,6 @@ export default function SettingsPage() {
           tithe_percentage: settingsData?.tithe_percentage || 10,
         });
       }
-
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load settings';
       setError(errorMessage);
@@ -180,7 +173,6 @@ export default function SettingsPage() {
     checkAuth();
   }, [router, fetchData]);
 
-  // --- Update Profile ---
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -195,9 +187,9 @@ export default function SettingsPage() {
 
       if (isInvestor) {
         tableToUpdate = 'investors';
-        updateValue = profile!.id; // Investors use their own ID
+        updateValue = profile!.id;
       } else {
-        updateValue = user.id; // Employees use auth_id
+        updateValue = user.id;
       }
 
       const { error } = await supabase
@@ -206,7 +198,7 @@ export default function SettingsPage() {
           full_name: profileForm.full_name.trim(),
           phone: profileForm.phone.trim() || null,
         })
-        .eq('auth_id', updateValue); // Updates all sector rows for this user
+        .eq('auth_id', updateValue);
 
       if (error) throw new Error(error.message);
       setSuccess('Profile updated successfully.');
@@ -219,7 +211,6 @@ export default function SettingsPage() {
     }
   };
 
-  // --- Update Password ---
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -253,7 +244,6 @@ export default function SettingsPage() {
     }
   };
 
-  // --- Update Company Settings (Admin only) ---
   const handleUpdateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -298,72 +288,69 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <SettingsIcon className="w-8 h-8 text-orange-600" />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* Header */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <SettingsIcon className="w-6 h-6 sm:w-8 sm:h-8 text-orange-600 shrink-0" />
             Settings
           </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Manage your account and company preferences.
           </p>
         </div>
 
         {/* Feedback Messages */}
         {error && (
-          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5" />
-              <span>{error}</span>
-            </div>
+          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 flex items-center gap-2 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5" />
-              <span>{success}</span>
-            </div>
+          <div className="mb-6 p-4 bg-green-100 dark:bg-green-900/20 border border-green-400 dark:border-green-800 rounded-lg text-green-700 dark:text-green-400 flex items-center gap-2 text-sm">
+            <CheckCircle2 className="w-5 h-5 shrink-0" />
+            <span>{success}</span>
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
-          <nav className="flex space-x-8">
+        {/* Tabs - horizontally scrollable on mobile */}
+        <div className="border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto scrollbar-hide">
+          <nav className="flex gap-1 sm:gap-4 min-w-max sm:min-w-0">
             <button
               onClick={() => setActiveTab('profile')}
-              className={`flex items-center gap-2 pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex items-center gap-2 pb-4 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'profile'
                   ? 'border-orange-500 text-orange-600 dark:text-orange-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
             >
-              <UserCircle className="w-5 h-5" />
+              <UserCircle className="w-5 h-5 shrink-0" />
               Profile
             </button>
             <button
               onClick={() => setActiveTab('security')}
-              className={`flex items-center gap-2 pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex items-center gap-2 pb-4 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === 'security'
                   ? 'border-orange-500 text-orange-600 dark:text-orange-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
               }`}
             >
-              <Lock className="w-5 h-5" />
+              <Lock className="w-5 h-5 shrink-0" />
               Security
             </button>
             {isAdmin && (
               <button
                 onClick={() => setActiveTab('company')}
-                className={`flex items-center gap-2 pb-4 px-1 text-sm font-medium border-b-2 transition-colors ${
+                className={`flex items-center gap-2 pb-4 px-3 sm:px-1 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === 'company'
                     ? 'border-orange-500 text-orange-600 dark:text-orange-400'
                     : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                 }`}
               >
-                <Building2 className="w-5 h-5" />
+                <Building2 className="w-5 h-5 shrink-0" />
                 Company
               </button>
             )}
@@ -371,15 +358,15 @@ export default function SettingsPage() {
         </div>
 
         {/* Content Area */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
           {/* Profile Tab */}
           {activeTab === 'profile' && (
             <form onSubmit={handleUpdateProfile} className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Personal Information
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Full Name <span className="text-red-500">*</span>
@@ -388,7 +375,7 @@ export default function SettingsPage() {
                       type="text"
                       value={profileForm.full_name}
                       onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                      className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                     />
                   </div>
                   <div>
@@ -399,7 +386,7 @@ export default function SettingsPage() {
                       type="email"
                       value={profile?.email || ''}
                       disabled
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                      className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed text-base"
                     />
                   </div>
                   <div>
@@ -410,7 +397,7 @@ export default function SettingsPage() {
                       type="text"
                       value={profileForm.phone}
                       onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                      className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                       placeholder="+254 712 345 678"
                     />
                   </div>
@@ -424,7 +411,7 @@ export default function SettingsPage() {
                           type="text"
                           value={sectors.find(s => s.id === profile?.sector_id)?.name || 'Not Assigned'}
                           disabled
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                          className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed text-base"
                         />
                       </div>
                       <div>
@@ -435,7 +422,7 @@ export default function SettingsPage() {
                           type="text"
                           value={profile?.role || ''}
                           disabled
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                          className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed text-base capitalize"
                         />
                       </div>
                       <div>
@@ -446,25 +433,30 @@ export default function SettingsPage() {
                           type="text"
                           value={`KES ${profile?.commission_rate || 0}`}
                           disabled
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                          className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed text-base"
                         />
                       </div>
                     </>
                   )}
                 </div>
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-2">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50 transition-colors"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
                   ) : (
-                    <Save className="w-4 h-4" />
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save Profile
+                    </>
                   )}
-                  Save Profile
                 </button>
               </div>
             </form>
@@ -474,10 +466,10 @@ export default function SettingsPage() {
           {activeTab === 'security' && (
             <form onSubmit={handleUpdatePassword} className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Change Password
                 </h3>
-                <div className="space-y-4">
+                <div className="space-y-4 max-w-md">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       New Password <span className="text-red-500">*</span>
@@ -486,7 +478,7 @@ export default function SettingsPage() {
                       type="password"
                       value={passwordForm.newPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                      className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                       placeholder="Enter new password"
                     />
                   </div>
@@ -498,24 +490,29 @@ export default function SettingsPage() {
                       type="password"
                       value={passwordForm.confirmPassword}
                       onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                      className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                       placeholder="Confirm new password"
                     />
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-2">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50 transition-colors"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Updating...
+                    </>
                   ) : (
-                    <Lock className="w-4 h-4" />
+                    <>
+                      <Lock className="w-4 h-4" />
+                      Update Password
+                    </>
                   )}
-                  Update Password
                 </button>
               </div>
             </form>
@@ -525,10 +522,10 @@ export default function SettingsPage() {
           {activeTab === 'company' && isAdmin && (
             <form onSubmit={handleUpdateCompany} className="space-y-6">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Company Information
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Company Name <span className="text-red-500">*</span>
@@ -537,7 +534,7 @@ export default function SettingsPage() {
                       type="text"
                       value={companyForm.company_name}
                       onChange={(e) => setCompanyForm({ ...companyForm, company_name: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                      className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                     />
                   </div>
                   <div>
@@ -548,7 +545,7 @@ export default function SettingsPage() {
                       type="text"
                       value={companyForm.paybill_number}
                       onChange={(e) => setCompanyForm({ ...companyForm, paybill_number: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                      className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                       placeholder="e.g. 522533"
                     />
                   </div>
@@ -560,7 +557,7 @@ export default function SettingsPage() {
                       type="text"
                       value={companyForm.bank_account}
                       onChange={(e) => setCompanyForm({ ...companyForm, bank_account: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                      className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                       placeholder="e.g. KCB Bank - 1352136236"
                     />
                   </div>
@@ -572,7 +569,7 @@ export default function SettingsPage() {
                       type="number"
                       value={companyForm.default_commission_rate}
                       onChange={(e) => setCompanyForm({ ...companyForm, default_commission_rate: Number(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                      className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                       placeholder="e.g. 500"
                     />
                   </div>
@@ -584,24 +581,29 @@ export default function SettingsPage() {
                       type="number"
                       value={companyForm.tithe_percentage}
                       onChange={(e) => setCompanyForm({ ...companyForm, tithe_percentage: Number(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700"
+                      className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                       placeholder="e.g. 10"
                     />
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-2">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2 text-sm text-white bg-orange-600 hover:bg-orange-700 rounded-md disabled:opacity-50 transition-colors"
                 >
                   {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Updating...
+                    </>
                   ) : (
-                    <Building2 className="w-4 h-4" />
+                    <>
+                      <Building2 className="w-4 h-4" />
+                      Update Company Settings
+                    </>
                   )}
-                  Update Company Settings
                 </button>
               </div>
             </form>

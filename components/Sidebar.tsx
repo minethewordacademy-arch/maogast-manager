@@ -11,6 +11,7 @@ import {
   LogOut,
   UserCircle,
   LineChart,
+   UserPlus, // ← add this
   Gift,
   Banknote,
   Menu,
@@ -87,6 +88,7 @@ export default function Sidebar() {
     navItems = [
       { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "Finances", href: "/finances", icon: LineChart }, // <-- ADD THIS
+       { name: "Team", href: "/team", icon: UserPlus }, // ← ADD THIS
       { name: "Admin Panel", href: "/admin", icon: Users },
       { name: "Investors", href: "/investors", icon: Wallet },
       { name: "Clients", href: "/clients", icon: UserCircle },

@@ -17,6 +17,7 @@ import {
   Eye,
   User as UserIcon,
   Phone,
+  LogOut,
 } from "lucide-react";
 
 interface Task {
@@ -49,6 +50,7 @@ interface Employee {
   sector_id: string;
   role: string;
   commission_rate: number;
+  status?: string;
 }
 
 export default function DashboardPage() {
@@ -72,6 +74,9 @@ export default function DashboardPage() {
     type: "success" | "error";
   } | null>(null);
 
+  // Pending approval state (for new signups waiting for admin approval)
+  const [pendingApproval, setPendingApproval] = useState(false);
+
   // New task form state
   const [taskTitle, setTaskTitle] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
@@ -94,8 +99,16 @@ export default function DashboardPage() {
         .eq("auth_id", authId);
 
       if (empError) throw empError;
-      
+
       if (!empData || empData.length === 0) {
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Check approval status BEFORE loading any data
+      const isApproved = empData.some((e) => e.status === "approved");
+      if (!isApproved) {
+        setPendingApproval(true);
         setLoading(false);
         return;
       }
@@ -111,7 +124,7 @@ export default function DashboardPage() {
           .select("name")
           .eq("id", emp.sector_id)
           .single();
-        
+
         if (sectorData) {
           sectors.push({
             id: emp.sector_id,
@@ -145,8 +158,11 @@ export default function DashboardPage() {
 
       setPendingCount(
         (taskData || []).filter(
-          (t) => t.status === "pending" || t.status === "in-progress" || t.status === "approved",
-        ).length,
+          (t) =>
+            t.status === "pending" ||
+            t.status === "in-progress" ||
+            t.status === "approved"
+        ).length
       );
 
       if (primaryEmployee.role === "admin") {
@@ -166,7 +182,8 @@ export default function DashboardPage() {
 
           if (commError) throw commError;
 
-          const total = commData?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
+          const total =
+            commData?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
           setTotalCommissionEarned(total);
         }
       }
@@ -195,55 +212,61 @@ export default function DashboardPage() {
   const handleTaskStatusChange = async (taskId: string, newStatus: string) => {
     try {
       setModalMessage(null);
-      
+
       const { error } = await supabase
-        .from('tasks')
+        .from("tasks")
         .update({ status: newStatus })
-        .eq('id', taskId);
+        .eq("id", taskId);
 
       if (error) throw error;
 
       setModalMessage({
         text: `Task status updated to ${newStatus}`,
-        type: 'success'
+        type: "success",
       });
 
       if (user) fetchTasks(user.id);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       setModalMessage({
         text: `Failed to update task status: ${errorMessage}`,
-        type: 'error'
+        type: "error",
       });
     }
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    if (!confirm("Are you sure you want to delete this task? This action cannot be undone.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this task? This action cannot be undone."
+      )
+    ) {
       return;
     }
 
     try {
       setModalMessage(null);
-      
+
       const { error } = await supabase
-        .from('tasks')
+        .from("tasks")
         .delete()
-        .eq('id', taskId);
+        .eq("id", taskId);
 
       if (error) throw error;
 
       setModalMessage({
         text: "Task deleted successfully.",
-        type: 'success'
+        type: "success",
       });
 
       if (user) fetchTasks(user.id);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       setModalMessage({
         text: `Failed to delete task: ${errorMessage}`,
-        type: 'error'
+        type: "error",
       });
     }
   };
@@ -251,7 +274,7 @@ export default function DashboardPage() {
   const handleEditTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTask) return;
-    
+
     setModalMessage(null);
     setIsSubmitting(true);
 
@@ -265,25 +288,26 @@ export default function DashboardPage() {
       };
 
       const { error } = await supabase
-        .from('tasks')
+        .from("tasks")
         .update(updates)
-        .eq('id', selectedTask.id);
+        .eq("id", selectedTask.id);
 
       if (error) throw error;
 
       setModalMessage({
         text: "Task updated successfully!",
-        type: 'success'
+        type: "success",
       });
 
       setShowEditModal(false);
       setSelectedTask(null);
       if (user) fetchTasks(user.id);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       setModalMessage({
         text: `Failed to update task: ${errorMessage}`,
-        type: 'error'
+        type: "error",
       });
     } finally {
       setIsSubmitting(false);
@@ -427,7 +451,8 @@ export default function DashboardPage() {
         if (user) fetchTasks(user.id);
       }, 1500);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
       setModalMessage({
         text: `Unexpected Error: ${errorMessage}`,
         type: "error",
@@ -436,6 +461,41 @@ export default function DashboardPage() {
       setIsSubmitting(false);
     }
   };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
+
+  // ⏳ Awaiting approval screen
+  if (pendingApproval) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 sm:p-8 text-center border border-gray-100 dark:border-gray-700">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 rounded-full bg-yellow-100 dark:bg-yellow-900/30 flex items-center justify-center">
+              <Clock className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
+            </div>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-3 font-display">
+            Awaiting Approval
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">
+            Your account is currently being reviewed by an administrator.
+            You&apos;ll gain access to the workspace as soon as you&apos;re
+            approved.
+          </p>
+          <button
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-2 text-sm text-orange-600 hover:text-orange-700 font-semibold"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -451,7 +511,6 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pt-16 lg:pt-0">
-        
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
@@ -471,9 +530,15 @@ export default function DashboardPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-orange-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Active Tasks</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Active Tasks
+                </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                  {tasks.filter(t => t.status !== 'completed' && t.status !== 'declined').length}
+                  {
+                    tasks.filter(
+                      (t) => t.status !== "completed" && t.status !== "declined"
+                    ).length
+                  }
                 </p>
               </div>
               <Clock className="w-8 h-8 text-orange-500 shrink-0" />
@@ -482,7 +547,9 @@ export default function DashboardPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Completed</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Completed
+                </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                   {tasks.filter((t) => t.status === "completed").length}
                 </p>
@@ -493,7 +560,9 @@ export default function DashboardPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-gray-400 sm:col-span-2 md:col-span-1">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Total Tasks</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Total Tasks
+                </p>
                 <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                   {tasks.length}
                 </p>
@@ -532,7 +601,8 @@ export default function DashboardPage() {
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {tasks.length === 0 ? (
               <div className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                No tasks assigned yet. Click &quot;New Task&quot; to get started.
+                No tasks assigned yet. Click &quot;New Task&quot; to get
+                started.
               </div>
             ) : (
               tasks.map((task) => (
@@ -569,7 +639,7 @@ export default function DashboardPage() {
                           Due: {new Date(task.due_date).toLocaleDateString()}
                         </span>
                       )}
-                      {task.status === 'declined' && task.declined_reason && (
+                      {task.status === "declined" && task.declined_reason && (
                         <span className="text-xs text-red-500 truncate">
                           Reason: {task.declined_reason}
                         </span>
@@ -581,8 +651,8 @@ export default function DashboardPage() {
                       )}
                     </div>
                   </div>
-                  
-                  {/* Task Actions - Wraps beautifully on mobile */}
+
+                  {/* Task Actions */}
                   <div className="flex flex-wrap items-center gap-2 mt-2 md:mt-0 md:justify-end shrink-0">
                     <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/50 p-1 rounded-md">
                       <button
@@ -608,31 +678,35 @@ export default function DashboardPage() {
                       </button>
                     </div>
 
-                    {task.status === 'approved' && (
+                    {task.status === "approved" && (
                       <button
-                        onClick={() => handleTaskStatusChange(task.id, 'in-progress')}
+                        onClick={() =>
+                          handleTaskStatusChange(task.id, "in-progress")
+                        }
                         className="flex-1 md:flex-none px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md whitespace-nowrap shadow-sm"
                       >
                         Start Work
                       </button>
                     )}
-                    
-                    {task.status === 'in-progress' && (
+
+                    {task.status === "in-progress" && (
                       <button
-                        onClick={() => handleTaskStatusChange(task.id, 'completed')}
+                        onClick={() =>
+                          handleTaskStatusChange(task.id, "completed")
+                        }
                         className="flex-1 md:flex-none px-4 py-2 text-sm text-white bg-purple-600 hover:bg-purple-700 rounded-md whitespace-nowrap shadow-sm"
                       >
                         Request Completion
                       </button>
                     )}
-                    
-                    {task.status === 'pending' && (
+
+                    {task.status === "pending" && (
                       <span className="flex-1 md:flex-none px-4 py-2 text-center text-sm bg-yellow-100 text-yellow-800 rounded-md whitespace-nowrap">
                         Awaiting Approval
                       </span>
                     )}
-                    
-                    {task.status === 'completed' && (
+
+                    {task.status === "completed" && (
                       <span className="flex-1 md:flex-none px-4 py-2 text-center text-sm bg-green-100 text-green-800 rounded-md whitespace-nowrap">
                         Pending Finalization
                       </span>
@@ -673,7 +747,7 @@ export default function DashboardPage() {
                   {modalMessage.text}
                 </div>
               )}
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Sector <span className="text-red-500">*</span>
@@ -1026,16 +1100,17 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {selectedTask.status === 'declined' && selectedTask.declined_reason && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
-                    Decline Reason
-                  </label>
-                  <p className="text-red-600 dark:text-red-400">
-                    {selectedTask.declined_reason}
-                  </p>
-                </div>
-              )}
+              {selectedTask.status === "declined" &&
+                selectedTask.declined_reason && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
+                      Decline Reason
+                    </label>
+                    <p className="text-red-600 dark:text-red-400">
+                      {selectedTask.declined_reason}
+                    </p>
+                  </div>
+                )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
