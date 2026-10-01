@@ -112,7 +112,6 @@ export default function Sidebar() {
       { name: "Sector Tasks", href: "/sector-tasks", icon: Layers },
       { name: "Tasks", href: "/tasks", icon: CheckSquare },
       { name: "Birthdays", href: "/birthdays", icon: Gift },
-      { name: "Tithe", href: "/tithe", icon: Banknote },
       { name: "Settings", href: "/settings", icon: Settings },
     ];
   }

@@ -53,13 +53,15 @@ export default function FinancesPage() {
 
   // Modal state (shared for Create & Edit)
   const [showModal, setShowModal] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editingTransaction, setEditingTransaction] =
+    useState<Transaction | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ ...emptyForm });
 
   // Delete confirmation modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+  const [transactionToDelete, setTransactionToDelete] =
+    useState<Transaction | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const router = useRouter();
@@ -69,7 +71,9 @@ export default function FinancesPage() {
       setLoading(true);
       setError(null);
 
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         router.push("/login");
         return;
@@ -100,7 +104,8 @@ export default function FinancesPage() {
       if (error) throw error;
       setTransactions(data || []);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to load financial data";
+      const msg =
+        err instanceof Error ? err.message : "Failed to load financial data";
       setError(msg);
     } finally {
       setLoading(false);
@@ -157,8 +162,8 @@ export default function FinancesPage() {
 
     try {
       if (editingTransaction) {
-        // UPDATE
-        const { error } = await supabase
+        // UPDATE — .select() returns the affected row(s) so we can detect silent RLS blocks
+        const { data: updatedRows, error } = await supabase
           .from("transactions")
           .update({
             amount: parseFloat(formData.amount),
@@ -167,9 +172,15 @@ export default function FinancesPage() {
             date: formData.date,
             description: formData.description.trim(),
           })
-          .eq("id", editingTransaction.id);
+          .eq("id", editingTransaction.id)
+          .select();
 
         if (error) throw error;
+        if (!updatedRows || updatedRows.length === 0) {
+          throw new Error(
+            "Update was blocked. You may not have permission to edit this transaction.",
+          );
+        }
         setSuccess("Transaction updated successfully!");
       } else {
         // CREATE
@@ -192,7 +203,8 @@ export default function FinancesPage() {
         fetchFinances();
       }, 1200);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to save transaction";
+      const msg =
+        err instanceof Error ? err.message : "Failed to save transaction";
       setError(msg);
     } finally {
       setIsSubmitting(false);
@@ -214,12 +226,20 @@ export default function FinancesPage() {
     setSuccess(null);
 
     try {
-      const { error } = await supabase
+      // .select() returns the deleted row(s) so we can detect silent RLS blocks
+      const { data: deletedRows, error } = await supabase
         .from("transactions")
         .delete()
-        .eq("id", transactionToDelete.id);
+        .eq("id", transactionToDelete.id)
+        .select();
 
       if (error) throw error;
+
+      if (!deletedRows || deletedRows.length === 0) {
+        throw new Error(
+          "Delete was blocked. You may not have permission to remove this transaction.",
+        );
+      }
 
       setSuccess("Transaction deleted successfully.");
       setShowDeleteModal(false);
@@ -228,7 +248,8 @@ export default function FinancesPage() {
 
       setTimeout(() => setSuccess(null), 2500);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to delete transaction";
+      const msg =
+        err instanceof Error ? err.message : "Failed to delete transaction";
       setError(msg);
     } finally {
       setIsDeleting(false);
@@ -290,7 +311,6 @@ export default function FinancesPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
           <div>
@@ -329,7 +349,9 @@ export default function FinancesPage() {
         <div className="flex flex-col sm:flex-row items-center gap-2 mb-6 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-sm w-full sm:w-fit border border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2 w-full sm:w-auto justify-center sm:justify-start mb-2 sm:mb-0">
             <Filter className="w-5 h-5 text-gray-400 shrink-0" />
-            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:hidden">Filter by:</span>
+            <span className="text-sm font-medium text-gray-500 dark:text-gray-400 sm:hidden">
+              Filter by:
+            </span>
           </div>
           <div className="flex gap-1 w-full sm:w-auto">
             {(["weekly", "monthly", "yearly"] as Timeframe[]).map((t) => (
@@ -353,7 +375,9 @@ export default function FinancesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-green-500 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Total Income</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Total Income
+                </p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
                   {formatCurrency(stats.income)}
                 </p>
@@ -367,7 +391,9 @@ export default function FinancesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-red-500 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Total Expenses</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Total Expenses
+                </p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
                   {formatCurrency(stats.expenses)}
                 </p>
@@ -381,8 +407,12 @@ export default function FinancesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-blue-500 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Net Income</p>
-                <p className={`text-xl sm:text-2xl font-bold mt-1 ${stats.netIncome >= 0 ? "text-gray-900 dark:text-white" : "text-red-600"}`}>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Net Income
+                </p>
+                <p
+                  className={`text-xl sm:text-2xl font-bold mt-1 ${stats.netIncome >= 0 ? "text-gray-900 dark:text-white" : "text-red-600"}`}
+                >
                   {formatCurrency(stats.netIncome)}
                 </p>
               </div>
@@ -395,7 +425,9 @@ export default function FinancesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-purple-500 hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Tithe (10% of Net)</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
+                  Tithe (10% of Net)
+                </p>
                 <p className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">
                   {formatCurrency(stats.tithe)}
                 </p>
@@ -412,7 +444,8 @@ export default function FinancesPage() {
           <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
             <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
               <Calendar className="w-5 h-5 text-orange-600 shrink-0" />
-              Transaction History ({timeframe.charAt(0).toUpperCase() + timeframe.slice(1)})
+              Transaction History (
+              {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)})
             </h2>
           </div>
 
@@ -432,22 +465,30 @@ export default function FinancesPage() {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredTransactions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-8 text-center text-gray-500 dark:text-gray-400"
+                    >
                       No transactions recorded for this period.
                     </td>
                   </tr>
                 ) : (
                   filteredTransactions.map((t) => (
-                    <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <tr
+                      key={t.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
                         {new Date(t.date).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          t.type === "income"
-                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                        }`}>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            t.type === "income"
+                              ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                          }`}
+                        >
                           {t.type.charAt(0).toUpperCase() + t.type.slice(1)}
                         </span>
                       </td>
@@ -457,10 +498,15 @@ export default function FinancesPage() {
                       <td className="px-6 py-4 text-gray-500 dark:text-gray-400 max-w-xs truncate">
                         {t.description || "-"}
                       </td>
-                      <td className={`px-6 py-4 text-right font-bold ${
-                        t.type === "income" ? "text-green-600" : "text-red-600"
-                      }`}>
-                        {t.type === "income" ? "+" : "-"} {formatCurrency(t.amount)}
+                      <td
+                        className={`px-6 py-4 text-right font-bold ${
+                          t.type === "income"
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {t.type === "income" ? "+" : "-"}{" "}
+                        {formatCurrency(t.amount)}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1">
@@ -495,14 +541,19 @@ export default function FinancesPage() {
               </div>
             ) : (
               filteredTransactions.map((t) => (
-                <div key={t.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <div
+                  key={t.id}
+                  className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
                   <div className="flex justify-between items-start mb-2 gap-2">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${
-                        t.type === "income"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                          : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                      }`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${
+                          t.type === "income"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
+                      >
                         {t.type.charAt(0).toUpperCase() + t.type.slice(1)}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
@@ -537,9 +588,11 @@ export default function FinancesPage() {
                     </p>
                   )}
 
-                  <div className={`text-right font-bold text-lg ${
-                    t.type === "income" ? "text-green-600" : "text-red-600"
-                  }`}>
+                  <div
+                    className={`text-right font-bold text-lg ${
+                      t.type === "income" ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
                     {t.type === "income" ? "+" : "-"} {formatCurrency(t.amount)}
                   </div>
                 </div>
@@ -557,7 +610,9 @@ export default function FinancesPage() {
           <div className="bg-white dark:bg-gray-800 rounded-t-2xl sm:rounded-xl shadow-2xl max-w-md w-full p-5 sm:p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
-                {editingTransaction ? "Edit Transaction" : "Log New Transaction"}
+                {editingTransaction
+                  ? "Edit Transaction"
+                  : "Log New Transaction"}
               </h3>
               <button
                 onClick={closeModal}
@@ -585,10 +640,17 @@ export default function FinancesPage() {
                       name="type"
                       value="income"
                       checked={formData.type === "income"}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value as "income" })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          type: e.target.value as "income",
+                        })
+                      }
                       className="w-4 h-4 text-orange-600 focus:ring-orange-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Income (Money In)</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Income (Money In)
+                    </span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer p-2 border border-gray-200 dark:border-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700/50 flex-1">
                     <input
@@ -596,10 +658,17 @@ export default function FinancesPage() {
                       name="type"
                       value="expense"
                       checked={formData.type === "expense"}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value as "expense" })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          type: e.target.value as "expense",
+                        })
+                      }
                       className="w-4 h-4 text-orange-600 focus:ring-orange-500"
                     />
-                    <span className="text-sm text-gray-700 dark:text-gray-300">Expense (Money Out)</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">
+                      Expense (Money Out)
+                    </span>
                   </label>
                 </div>
               </div>
@@ -614,7 +683,9 @@ export default function FinancesPage() {
                   min="0"
                   step="0.01"
                   value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, amount: e.target.value })
+                  }
                   className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. 50000"
                 />
@@ -622,13 +693,16 @@ export default function FinancesPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Source (Project Name - Client Name) <span className="text-red-500">*</span>
+                  Source (Project Name - Client Name){" "}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.source}
-                  onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, source: e.target.value })
+                  }
                   className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. Website Revamp - John Doe"
                 />
@@ -642,7 +716,9 @@ export default function FinancesPage() {
                   type="date"
                   required
                   value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, date: e.target.value })
+                  }
                   className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                 />
               </div>
@@ -653,7 +729,9 @@ export default function FinancesPage() {
                 </label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   rows={3}
                   className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                   placeholder="e.g. Deposit for project milestone 1"
@@ -704,18 +782,22 @@ export default function FinancesPage() {
                 Delete Transaction?
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                This action cannot be undone. This will permanently remove the transaction from your records.
+                This action cannot be undone. This will permanently remove the
+                transaction from your records.
               </p>
 
               {/* Preview of the transaction being deleted */}
               <div className="w-full bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 mb-6 text-left">
                 <div className="flex justify-between items-center mb-1">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                    transactionToDelete.type === "income"
-                      ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                      : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                  }`}>
-                    {transactionToDelete.type.charAt(0).toUpperCase() + transactionToDelete.type.slice(1)}
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      transactionToDelete.type === "income"
+                        ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                    }`}
+                  >
+                    {transactionToDelete.type.charAt(0).toUpperCase() +
+                      transactionToDelete.type.slice(1)}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(transactionToDelete.date).toLocaleDateString()}
@@ -724,10 +806,15 @@ export default function FinancesPage() {
                 <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
                   {transactionToDelete.source}
                 </p>
-                <p className={`font-bold mt-1 ${
-                  transactionToDelete.type === "income" ? "text-green-600" : "text-red-600"
-                }`}>
-                  {transactionToDelete.type === "income" ? "+" : "-"} {formatCurrency(transactionToDelete.amount)}
+                <p
+                  className={`font-bold mt-1 ${
+                    transactionToDelete.type === "income"
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {transactionToDelete.type === "income" ? "+" : "-"}{" "}
+                  {formatCurrency(transactionToDelete.amount)}
                 </p>
               </div>
             </div>

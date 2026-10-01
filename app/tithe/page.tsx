@@ -64,6 +64,28 @@ export default function TithePage() {
         router.push("/login");
         return;
       }
+
+      // ✅ Verify the user is an approved admin — otherwise, send them back
+      const { data: empData, error: empError } = await supabase
+        .from("employees")
+        .select("role, status")
+        .eq("auth_id", session.user.id);
+
+      if (empError) {
+        console.error("Admin check failed:", empError);
+        router.push("/dashboard");
+        return;
+      }
+
+      const isUserAdmin = (empData || []).some(
+        (e) => e.role === "admin" && e.status === "approved",
+      );
+
+      if (!isUserAdmin) {
+        router.push("/dashboard");
+        return;
+      }
+
       fetchTitheData();
     };
     checkAuth();
@@ -86,7 +108,6 @@ export default function TithePage() {
       "December",
     ];
 
-    // Initialize monthly data
     const monthlyData = months.map((name, index) => ({
       monthIndex: index,
       name,
@@ -116,7 +137,6 @@ export default function TithePage() {
       }
     });
 
-    // Calculate net income and tithe for each month
     monthlyData.forEach((data) => {
       data.netIncome = data.income - data.expenses;
       data.tithe = data.netIncome > 0 ? data.netIncome * 0.1 : 0;
@@ -134,7 +154,6 @@ export default function TithePage() {
     };
   }, [transactions, selectedYear]);
 
-  // Get unique years from transactions for the filter
   const availableYears = useMemo(() => {
     const years = new Set<number>();
     years.add(new Date().getFullYear());
@@ -177,7 +196,6 @@ export default function TithePage() {
             </p>
           </div>
 
-          {/* Year Filter */}
           <div className="w-full sm:w-auto">
             <select
               value={selectedYear}
@@ -202,7 +220,6 @@ export default function TithePage() {
 
         {/* Yearly Totals Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
-          {/* Total Income */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
@@ -219,7 +236,6 @@ export default function TithePage() {
             </div>
           </div>
 
-          {/* Total Expenses */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-red-500">
             <div className="flex items-center justify-between">
               <div>
@@ -236,7 +252,6 @@ export default function TithePage() {
             </div>
           </div>
 
-          {/* Net Income */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
@@ -255,7 +270,6 @@ export default function TithePage() {
             </div>
           </div>
 
-          {/* Total Tithe */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-6 border-l-4 border-purple-500">
             <div className="flex items-center justify-between">
               <div>
@@ -301,7 +315,6 @@ export default function TithePage() {
             </h2>
           </div>
 
-          {/* DESKTOP TABLE (Hidden on mobile) */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
@@ -344,7 +357,6 @@ export default function TithePage() {
             </table>
           </div>
 
-          {/* MOBILE CARD VIEW (Hidden on desktop) */}
           <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-700">
             {yearlyData.months.map((data) => (
               <div
