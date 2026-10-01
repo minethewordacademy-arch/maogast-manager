@@ -63,22 +63,8 @@ export async function POST(request: NextRequest) {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // 5. Delete the auth user FIRST
-    //    (so they can't log in even if the employee row deletion fails)
-    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(auth_id);
-
-    if (authDeleteError) {
-      console.error('[delete-employee] Auth delete failed:', authDeleteError);
-      // If the auth user doesn't exist, continue (might be orphaned record)
-      if (!authDeleteError.message.toLowerCase().includes('not found')) {
-        return NextResponse.json(
-          { error: `Failed to delete auth user: ${authDeleteError.message}` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // 6. Delete the employee record
+    // 5. Delete the employee record FIRST
+    //    (because employees.auth_id has a FK constraint to auth.users)
     const { error: empDeleteError } = await supabaseAdmin
       .from('employees')
       .delete()
@@ -87,9 +73,22 @@ export async function POST(request: NextRequest) {
     if (empDeleteError) {
       console.error('[delete-employee] Employee row delete failed:', empDeleteError);
       return NextResponse.json(
-        { error: `Auth user removed, but failed to remove employee record: ${empDeleteError.message}` },
+        { error: `Failed to remove employee record: ${empDeleteError.message}` },
         { status: 400 }
       );
+    }
+
+    // 6. Now delete the auth user (no FK blocks it anymore)
+    const { error: authDeleteError } = await supabaseAdmin.auth.admin.deleteUser(auth_id);
+
+    if (authDeleteError) {
+      console.error('[delete-employee] Auth delete failed:', authDeleteError);
+      // The employee row is already gone, so they can't log in to the app anymore.
+      // Log the error but still return partial success to avoid confusion.
+      return NextResponse.json({
+        success: true,
+        warning: `Employee record removed, but auth user could not be deleted: ${authDeleteError.message}. They can no longer log in to the app.`,
+      });
     }
 
     return NextResponse.json({ success: true });
