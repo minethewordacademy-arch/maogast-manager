@@ -30,6 +30,7 @@ interface Employee {
   email: string;
   role: string;
   sector_id: string;
+  sector_ids: string[] | null;
   commission_rate: number;
   status: 'pending' | 'approved' | 'declined';
   phone: string | null;
@@ -45,7 +46,7 @@ const emptyForm = {
   full_name: '',
   email: '',
   password: '',
-  sector_id: '',
+  sector_ids: [] as string[],
   role: 'employee',
   commission_rate: 500,
 };
@@ -70,7 +71,7 @@ export default function TeamPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [editForm, setEditForm] = useState({
     role: 'employee',
-    sector_id: '',
+    sector_ids: [] as string[],
     commission_rate: 0,
     status: 'approved' as 'pending' | 'approved' | 'declined',
   });
@@ -130,9 +131,6 @@ export default function TeamPage() {
 
       if (sectorError) throw sectorError;
       setSectors(sectorData || []);
-      if (sectorData && sectorData.length > 0) {
-        setFormData((prev) => ({ ...prev, sector_id: sectorData[0].id }));
-      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load team data');
     } finally {
@@ -176,6 +174,17 @@ export default function TeamPage() {
     }
   };
 
+  // Toggle a sector in an array
+  const toggleSector = (
+    sectorId: string,
+    currentArray: string[],
+  ): string[] => {
+    if (currentArray.includes(sectorId)) {
+      return currentArray.filter((id) => id !== sectorId);
+    }
+    return [...currentArray, sectorId];
+  };
+
   // Create new employee via API route
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,8 +192,14 @@ export default function TeamPage() {
     setError(null);
     setSuccess(null);
 
-    if (!formData.email || !formData.password || !formData.full_name || !formData.sector_id) {
+    if (!formData.email || !formData.password || !formData.full_name) {
       setError('Please fill in all required fields.');
+      setIsCreating(false);
+      return;
+    }
+
+    if (formData.sector_ids.length === 0) {
+      setError('Please select at least one sector.');
       setIsCreating(false);
       return;
     }
@@ -203,7 +218,7 @@ export default function TeamPage() {
           email: formData.email.trim(),
           password: formData.password,
           full_name: formData.full_name.trim(),
-          sector_id: formData.sector_id,
+          sector_ids: formData.sector_ids,
           role: formData.role,
           commission_rate: Number(formData.commission_rate),
         }),
@@ -217,7 +232,7 @@ export default function TeamPage() {
 
       setSuccess(`${formData.full_name} added to the team successfully.`);
       setShowCreateModal(false);
-      setFormData({ ...emptyForm, sector_id: sectors[0]?.id || '' });
+      setFormData({ ...emptyForm });
       await fetchData();
       setTimeout(() => setSuccess(null), 3500);
     } catch (err: unknown) {
@@ -230,9 +245,16 @@ export default function TeamPage() {
   // Open edit modal
   const openEditModal = (emp: Employee) => {
     setEditingEmployee(emp);
+    // Fall back to sector_id if sector_ids is empty (legacy data)
+    const sectorIds =
+      emp.sector_ids && emp.sector_ids.length > 0
+        ? emp.sector_ids
+        : emp.sector_id
+        ? [emp.sector_id]
+        : [];
     setEditForm({
       role: emp.role,
-      sector_id: emp.sector_id,
+      sector_ids: sectorIds,
       commission_rate: emp.commission_rate,
       status: emp.status,
     });
@@ -243,6 +265,12 @@ export default function TeamPage() {
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingEmployee) return;
+
+    if (editForm.sector_ids.length === 0) {
+      setError('Please select at least one sector.');
+      return;
+    }
+
     setIsSaving(true);
     setError(null);
     setSuccess(null);
@@ -252,7 +280,8 @@ export default function TeamPage() {
         .from('employees')
         .update({
           role: editForm.role,
-          sector_id: editForm.sector_id,
+          sector_id: editForm.sector_ids[0],          // keep primary in sync
+          sector_ids: editForm.sector_ids,             // full array
           commission_rate: Number(editForm.commission_rate),
           status: editForm.status,
         })
@@ -284,7 +313,7 @@ export default function TeamPage() {
     setError(null);
   };
 
-  // Confirm delete — calls the API route so both auth user & employee row are removed
+  // Confirm delete
   const handleDelete = async () => {
     if (!employeeToDelete) return;
     setIsDeleting(true);
@@ -336,6 +365,18 @@ export default function TeamPage() {
 
   const getSectorName = (sectorId: string) =>
     sectors.find((s) => s.id === sectorId)?.name || 'Unassigned';
+
+  // Get all sector names for an employee (handles legacy single sector_id)
+  const getEmployeeSectorNames = (emp: Employee): string => {
+    const ids =
+      emp.sector_ids && emp.sector_ids.length > 0
+        ? emp.sector_ids
+        : emp.sector_id
+        ? [emp.sector_id]
+        : [];
+    if (ids.length === 0) return 'Unassigned';
+    return ids.map((id) => getSectorName(id)).join(', ');
+  };
 
   if (loading) {
     return (
@@ -486,7 +527,7 @@ export default function TeamPage() {
                 <tr>
                   <th className="px-6 py-3">Name</th>
                   <th className="px-6 py-3">Email</th>
-                  <th className="px-6 py-3">Sector</th>
+                  <th className="px-6 py-3">Sectors</th>
                   <th className="px-6 py-3">Role</th>
                   <th className="px-6 py-3 text-right">Rate (KES)</th>
                   <th className="px-6 py-3 text-right">Actions</th>
@@ -509,7 +550,7 @@ export default function TeamPage() {
                         {emp.email}
                       </td>
                       <td className="px-6 py-4 text-gray-600 dark:text-gray-300">
-                        {getSectorName(emp.sector_id)}
+                        {getEmployeeSectorNames(emp)}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
@@ -606,10 +647,10 @@ export default function TeamPage() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
-                      <span className="block text-gray-500 dark:text-gray-400 mb-0.5">Sector</span>
-                      <span className="font-medium text-gray-900 dark:text-white truncate block">
-                        {getSectorName(emp.sector_id)}
+                    <div className="col-span-2 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                      <span className="block text-gray-500 dark:text-gray-400 mb-0.5">Sectors</span>
+                      <span className="font-medium text-gray-900 dark:text-white block">
+                        {getEmployeeSectorNames(emp)}
                       </span>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
@@ -618,8 +659,8 @@ export default function TeamPage() {
                         {emp.role}
                       </span>
                     </div>
-                    <div className="col-span-2 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
-                      <span className="block text-gray-500 dark:text-gray-400 mb-0.5">Commission Rate</span>
+                    <div className="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-md">
+                      <span className="block text-gray-500 dark:text-gray-400 mb-0.5">Rate</span>
                       <span className="font-medium text-gray-900 dark:text-white">
                         KES {emp.commission_rate.toLocaleString()}
                       </span>
@@ -688,7 +729,7 @@ export default function TeamPage() {
               <button
                 onClick={() => {
                   setShowCreateModal(false);
-                  setFormData({ ...emptyForm, sector_id: sectors[0]?.id || '' });
+                  setFormData({ ...emptyForm });
                   setError(null);
                 }}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-1"
@@ -760,21 +801,55 @@ export default function TeamPage() {
                 </div>
               </div>
 
+              {/* Multi-sector selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Sector <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
-                  value={formData.sector_id}
-                  onChange={(e) => setFormData({ ...formData, sector_id: e.target.value })}
-                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
-                >
-                  <option value="">Select a sector</option>
-                  {sectors.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Sectors <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {formData.sector_ids.length} selected
+                  </span>
+                </div>
+                <div className="border border-gray-300 dark:border-gray-600 rounded-md max-h-52 overflow-y-auto p-1 bg-white dark:bg-gray-700">
+                  {sectors.length === 0 ? (
+                    <p className="p-3 text-sm text-gray-500 dark:text-gray-400">
+                      No sectors available
+                    </p>
+                  ) : (
+                    sectors.map((s) => {
+                      const checked = formData.sector_ids.includes(s.id);
+                      return (
+                        <label
+                          key={s.id}
+                          className={`flex items-center gap-3 p-2.5 rounded-md cursor-pointer transition-colors ${
+                            checked
+                              ? 'bg-orange-50 dark:bg-orange-900/20'
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() =>
+                              setFormData({
+                                ...formData,
+                                sector_ids: toggleSector(s.id, formData.sector_ids),
+                              })
+                            }
+                            className="w-4 h-4 text-orange-600 focus:ring-orange-500 rounded"
+                          />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {s.name}
+                          </span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  First selected sector becomes the primary sector.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -811,7 +886,7 @@ export default function TeamPage() {
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
-                    setFormData({ ...emptyForm, sector_id: sectors[0]?.id || '' });
+                    setFormData({ ...emptyForm });
                     setError(null);
                   }}
                   className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
@@ -894,19 +969,46 @@ export default function TeamPage() {
                 </select>
               </div>
 
+              {/* Multi-sector selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Sector
-                </label>
-                <select
-                  value={editForm.sector_id}
-                  onChange={(e) => setEditForm({ ...editForm, sector_id: e.target.value })}
-                  className="w-full px-4 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
-                >
-                  {sectors.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Sectors <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {editForm.sector_ids.length} selected
+                  </span>
+                </div>
+                <div className="border border-gray-300 dark:border-gray-600 rounded-md max-h-52 overflow-y-auto p-1 bg-white dark:bg-gray-700">
+                  {sectors.map((s) => {
+                    const checked = editForm.sector_ids.includes(s.id);
+                    return (
+                      <label
+                        key={s.id}
+                        className={`flex items-center gap-3 p-2.5 rounded-md cursor-pointer transition-colors ${
+                          checked
+                            ? 'bg-orange-50 dark:bg-orange-900/20'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setEditForm({
+                              ...editForm,
+                              sector_ids: toggleSector(s.id, editForm.sector_ids),
+                            })
+                          }
+                          className="w-4 h-4 text-orange-600 focus:ring-orange-500 rounded"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
+                          {s.name}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1008,9 +1110,9 @@ export default function TeamPage() {
                   </span>
                 </div>
                 <div className="flex justify-between text-xs mt-1">
-                  <span className="text-gray-500 dark:text-gray-400">Sector</span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {getSectorName(employeeToDelete.sector_id)}
+                  <span className="text-gray-500 dark:text-gray-400">Sectors</span>
+                  <span className="font-medium text-gray-900 dark:text-white text-right ml-2">
+                    {getEmployeeSectorNames(employeeToDelete)}
                   </span>
                 </div>
               </div>

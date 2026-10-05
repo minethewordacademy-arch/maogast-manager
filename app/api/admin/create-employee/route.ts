@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    // 1. Verify the caller is an admin
+    // 1. Verify the caller is an approved admin
     const cookieStore = await cookies();
     const supabaseAuth = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,27 +33,36 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .single();
 
-    if (!callerData || callerData.role !== 'admin') {
+    if (!callerData || callerData.role !== 'admin' || callerData.status !== 'approved') {
       return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
     }
 
     // 2. Parse body
     const body = await request.json();
-    const { email, password, full_name, sector_id, role, commission_rate } = body;
+    const { email, password, full_name, sector_ids, role, commission_rate } = body;
 
-    if (!email || !password || !full_name || !sector_id) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    // Accept both sector_ids (array) and sector_id (legacy single)
+    const sectorsArray: string[] = Array.isArray(sector_ids)
+      ? sector_ids
+      : body.sector_id
+      ? [body.sector_id]
+      : [];
+
+    if (!email || !password || !full_name || sectorsArray.length === 0) {
+      return NextResponse.json(
+        { error: 'Missing required fields (email, password, full_name, sector_ids)' },
+        { status: 400 }
+      );
     }
 
-    // 3. Use service role to create the auth user
+    // 3. Service role client
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: { autoRefreshToken: false, persistSession: false },
-      }
+      { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
+    // 4. Create auth user
     const { data: newUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -67,21 +76,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Create the employee record
+    // 5. Insert employee with BOTH sector_id (primary) and sector_ids (full array)
     const { error: empError } = await supabaseAdmin
       .from('employees')
       .insert({
         auth_id: newUser.user.id,
         email,
         full_name,
-        sector_id,
+        sector_id: sectorsArray[0],       // primary (first selected)
+        sector_ids: sectorsArray,          // full array
         role: role || 'employee',
         commission_rate: commission_rate || 0,
         status: 'approved',
       });
 
     if (empError) {
-      // Roll back the auth user if employee insert fails
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
       return NextResponse.json({ error: empError.message }, { status: 400 });
     }
