@@ -512,9 +512,11 @@ export default function TeamPage() {
                         {getSectorName(emp.sector_id)}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${
                           emp.role === 'admin'
                             ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
+                            : emp.role === 'director'
+                            ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
                             : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
                         }`}>
                           {emp.role === 'admin' && <Shield className="w-3 h-3 mr-1" />}
@@ -786,6 +788,7 @@ export default function TeamPage() {
                     className="w-full px-3 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                   >
                     <option value="employee">Employee</option>
+                    <option value="director">Director</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>
@@ -917,6 +920,7 @@ export default function TeamPage() {
                     className="w-full px-3 py-3 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 dark:bg-gray-700 dark:text-white text-base"
                   >
                     <option value="employee">Employee</option>
+                    <option value="director">Director</option>
                     <option value="admin">Admin</option>
                   </select>
                 </div>
